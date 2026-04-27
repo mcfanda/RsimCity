@@ -1,0 +1,18 @@
+Package: Rsimcity
+Type: Package
+Title: R6 suite for simulations
+Version: 0.1.0
+Authors@R: c(
+    person(
+      "Marcello", "Gallucci",
+      email = "mcfanda@gmail.com",
+      role = c("aut", "cre")
+    )
+  )
+Description: Provides generic function to setup and run simulations and experiments.
+    Beta versioon.
+Imports: R6    
+License: GPL
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.3.3
