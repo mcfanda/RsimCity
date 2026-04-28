@@ -63,7 +63,7 @@ Runner <- R6::R6Class(
     #' @param name A label for this object
     #'
     #' @return A new `Runner` object.
-    initialize = function(name) {
+    initialize = function(name="SimCityRunner") {
       self$name <- name
     },
 
@@ -374,7 +374,7 @@ Runner <- R6::R6Class(
     #' @return NULL.
     reset_steps = function() {
       private$.steps<-list()
-      cat("SC Runner: steps reset ok\n")
+      cat(self$name,": steps reset ok\n")
 
     }
   ),

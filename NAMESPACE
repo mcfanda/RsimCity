@@ -3,4 +3,5 @@
 export(Runner)
 export(correlated_sample)
 export(count_names)
+export(plot_by_method)
 importFrom(stats,rnorm)

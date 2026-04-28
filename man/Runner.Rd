@@ -103,7 +103,7 @@ the obj$step functions}
 \subsection{Method \code{new()}}{
 Create a new simulation runner.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$new(name)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Runner$new(name = "SimCityRunner")}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
