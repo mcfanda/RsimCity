@@ -63,7 +63,8 @@ runner$experiment(Rep = 100)
 \item{\code{params}}{Named list. Fixed simulation parameters passed to simulation steps.}
 
 \item{\code{design}}{Named list. Experimental design parameters. All combinations
-are expanded with `expand.grid()`.}
+are expanded with `expand.grid()`. In case some parameter is already
+set in obj$params, the obj%design is used and the obj$params parameter is ignored.}
 
 \item{\code{step}}{Function or list of functions. Adds a simulation step, or
 returns the currently defined steps when accessed without assignment.
@@ -92,6 +93,7 @@ the obj$step functions}
 \item \href{#method-simcity_runner-one_cycle}{\code{Runner$one_cycle()}}
 \item \href{#method-simcity_runner-test_aggregates}{\code{Runner$test_aggregates()}}
 \item \href{#method-simcity_runner-test_one}{\code{Runner$test_one()}}
+\item \href{#method-simcity_runner-reset_steps}{\code{Runner$reset_steps()}}
 \item \href{#method-simcity_runner-clone}{\code{Runner$clone()}}
 }
 }
@@ -101,7 +103,7 @@ the obj$step functions}
 \subsection{Method \code{new()}}{
 Create a new simulation runner.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$new(name)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Runner$new(name = "SimCityRunner")}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -228,6 +230,19 @@ Run one single simulation.
 
 \subsection{Returns}{
 The result of one full step sequence.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-simcity_runner-reset_steps"></a>}}
+\if{latex}{\out{\hypertarget{method-simcity_runner-reset_steps}{}}}
+\subsection{Method \code{reset_steps()}}{
+reset step functions.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Runner$reset_steps()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+NULL.
 }
 }
 \if{html}{\out{<hr>}}

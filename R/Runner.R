@@ -63,7 +63,7 @@ Runner <- R6::R6Class(
     #' @param name A label for this object
     #'
     #' @return A new `Runner` object.
-    initialize = function(name) {
+    initialize = function(name="SimCityRunner") {
       self$name <- name
     },
 
@@ -122,9 +122,11 @@ Runner <- R6::R6Class(
       } else {
         future::plan(future::sequential)
       }
+
       params <- private$.params[setdiff(names(private$.params), names(private$.design))]
       params <- c(params, private$.design)
-      egrid  <- expand.grid(params)
+
+      egrid  <- expand.grid(params,stringsAsFactors = FALSE)
       .names <- names(egrid)
 
       ncond <- nrow(egrid)
@@ -142,44 +144,67 @@ Runner <- R6::R6Class(
         private$.run_aggregates(data, one)
       }
 
-      make_message <- function(i) {
+      shorten <- function(x, max_chars = 35) {
+
+        x <- as.character(x)
+
+        if (nchar(x, type = "width") <= max_chars) {
+          return(x)
+        }
+
+        paste0(substr(x, 1, max_chars - 3), "...")
+      }
+
+      make_params_message <- function(i) {
 
         one <- egrid[i, , drop = FALSE]
 
-        sprintf(
-          "condition %s/%s completed | %s reps each | total planned runs: %s | %s",
-          i,
-          ncond,
-          Rep,
-          ntotal_runs,
-          paste(.names, one, sep = "=", collapse = ", ")
-        )
+        vals <- unlist(one[1, .names, drop = TRUE], use.names = FALSE)
+
+        txt <- paste(.names, vals, sep = "=", collapse = ", ")
+
+        terminal_width <- getOption("width", 80)
+
+        ## leave room for bar, percent, elapsed, eta, etc.
+        max_param_width <- max(20, terminal_width - 70)
+
+        shorten(txt, max_param_width)
       }
 
       pb <- NULL
 
       if (progress) {
+
         pb <- progress::progress_bar$new(
           total = ncond,
           clear = FALSE,
-          width = 80,
+          width = min(getOption("width", 80), 100),
           show_after = 0,
-          format = "[:bar] :percent | :current/:total conditions | elapsed: :elapsed | eta: :eta | :message"
+          format = paste0(
+            "[:bar] :percent | ",
+            ":current/:total cond | ",
+            "elapsed: :elapsed | ",
+            "eta: :eta | ",
+            ":params"
+          )
         )
 
-        pb$tick(0, tokens = list(
-          message = sprintf(
-            "starting simulation | 0/%s conditions | %s reps each | total planned runs: %s",
-            ncond,
-            Rep,
-            ntotal_runs
+        pb$tick(
+          0,
+          tokens = list(
+            params = sprintf(
+              "starting | %s reps each | %s planned runs",
+              Rep,
+              ntotal_runs
+            )
           )
-        ))
+        )
       }
 
       if (isTRUE(self$parallel)) {
 
         user_fun_globals <- .collect_user_functions(.GlobalEnv)
+
         future_globals <- c(
           list(
             run_one = run_one,
@@ -197,7 +222,10 @@ Runner <- R6::R6Class(
             future::future(
               run_one(ii),
               seed = TRUE,
-              globals = c(future_globals,list(ii = ii)              )
+              globals = c(
+                future_globals,
+                list(ii = ii)
+              )
             )
           })
         })
@@ -207,16 +235,24 @@ Runner <- R6::R6Class(
 
         while (!all(done)) {
 
-          ready <- which(!done & vapply(futures, future::resolved, logical(1)))
+          ready <- which(
+            !done &
+              vapply(futures, future::resolved, logical(1))
+          )
 
           if (length(ready) > 0) {
+
             for (i in ready) {
 
               results[[i]] <- future::value(futures[[i]])
               done[i] <- TRUE
 
               if (progress) {
-                pb$tick(tokens = list(message = make_message(i)))
+                pb$tick(
+                  tokens = list(
+                    params = make_params_message(i)
+                  )
+                )
               }
             }
           }
@@ -235,7 +271,11 @@ Runner <- R6::R6Class(
           results[[i]] <- run_one(i)
 
           if (progress) {
-            pb$tick(tokens = list(message = make_message(i)))
+            pb$tick(
+              tokens = list(
+                params = make_params_message(i)
+              )
+            )
           }
         }
       }
@@ -327,6 +367,15 @@ Runner <- R6::R6Class(
       data <- private$.one_run(one)
 
       return(data)
+    },
+    #' @description
+    #' reset step functions.
+    #'
+    #' @return NULL.
+    reset_steps = function() {
+      private$.steps<-list()
+      cat(self$name,": steps reset ok\n")
+
     }
   ),
 
@@ -442,13 +491,18 @@ Runner <- R6::R6Class(
     },
 
     #' @field design Named list. Experimental design parameters. All combinations
-    #'   are expanded with `expand.grid()`.
+    #'   are expanded with `expand.grid()`. In case some parameter is already
+    #'   set in obj$params, the obj%design is used and the obj$params parameter is ignored.
     design = function(alist) {
       if (missing(alist)) {
         private$.design
       } else {
         if (is.null(names(alist)))
-          stop("obj$design must be a named list")
+          stop("obj$design must be a named list"
+               )
+        private$.params <- private$.params[
+          setdiff(names(private$.params), names(alist))
+        ]
 
         lapply(names(alist), function(x) private$.design[[x]] <- alist[[x]])
       }

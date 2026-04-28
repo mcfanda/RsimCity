@@ -10,7 +10,7 @@ Authors@R: c(
     )
   )
 Description: Provides generic function to setup and run simulations and experiments.
-    Beta versioon.
+    Beta version.
 Imports: R6    
 License: GPL
 Encoding: UTF-8
