@@ -114,3 +114,10 @@ numColMean <- function(x) {
     vapply(objs, is.function, logical(1))
   ]
 }
+
+### this is just aesthetics
+
+.running_in_rscript <- function() {
+  exe <- basename(commandArgs()[1])
+  grepl("^Rscript", exe)
+}
