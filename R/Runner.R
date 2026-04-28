@@ -173,6 +173,12 @@ Runner <- R6::R6Class(
 
       pb <- NULL
 
+      if (progress && .running_in_rscript()) {
+        old_width <- getOption("width")
+        options(width = max(old_width, 200))
+        on.exit(options(width = old_width), add = TRUE)
+      }
+
       if (progress) {
 
         pb <- progress::progress_bar$new(
