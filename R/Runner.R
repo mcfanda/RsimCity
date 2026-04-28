@@ -176,9 +176,6 @@ Runner <- R6::R6Class(
 
       if (progress) {
 
-        old_width <- getOption("width")
-        options(width = max(old_width, 200))
-        on.exit(options(width = old_width), add = TRUE)
 
 
         pb <- progress::progress_bar$new(
