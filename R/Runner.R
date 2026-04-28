@@ -374,7 +374,8 @@ Runner <- R6::R6Class(
     #' @return NULL.
     reset_steps = function() {
       private$.steps<-list()
-      NULL
+      cat("SC Runner: steps reset ok\n")
+
     }
   ),
 
