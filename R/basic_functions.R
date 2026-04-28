@@ -60,9 +60,10 @@ correlated_sample <- function(N, R, mu = 0, sd = 1, seed = NULL) {
   X <- sweep(X, 2, mu, FUN = "+")
 
   colnames(X) <- paste0("x", seq_len(K))
-
   as.data.frame(X)
 }
+
+
 bind_list_cols <- function(df, x) {
   x <- x[sapply(x, function(z) is.numeric(z) || is.character(z))]
   xdf <- as.data.frame(x, stringsAsFactors = FALSE)
@@ -70,6 +71,18 @@ bind_list_cols <- function(df, x) {
   rownames(xdf) <- NULL
   cbind(xdf, df)
 }
+
+#' Count elements
+#'
+#' @description
+#' Count the frequency of elements of a vector in another vector
+#' @export
+count_names <- function(V, X) {
+  out <- tabulate(match(X, V), nbins = length(V))
+  names(out) <- V
+  out
+}
+
 
 ### makes column means for numeric and use the first entry for character columns
 numColMean <- function(x) {

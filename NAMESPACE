@@ -2,4 +2,5 @@
 
 export(Runner)
 export(correlated_sample)
+export(count_names)
 importFrom(stats,rnorm)
