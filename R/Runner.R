@@ -126,7 +126,7 @@ Runner <- R6::R6Class(
       params <- private$.params[setdiff(names(private$.params), names(private$.design))]
       params <- c(params, private$.design)
 
-      egrid  <- expand.grid(params)
+      egrid  <- expand.grid(params,stringsAsFactors = FALSE)
       .names <- names(egrid)
 
       ncond <- nrow(egrid)
