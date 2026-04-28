@@ -453,8 +453,10 @@ Runner <- R6::R6Class(
             invokeRestart("muffleWarning")
           }
         ),
+
         error = function(e) {
           warning(paste("one_step", conditionMessage(e)))
+          warning(deparse(fun))
           NULL
         }
       )
