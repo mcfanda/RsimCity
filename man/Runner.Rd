@@ -63,8 +63,8 @@ runner$experiment(Rep = 100)
 \item{\code{params}}{Named list. Fixed simulation parameters passed to simulation steps.}
 
 \item{\code{design}}{Named list. Experimental design parameters. All combinations
-are expanded with `expand.grid()`. In case some parameter is already
-set in obj$params, the obj%design is used and the obj$params parameter is ignored.}
+are expanded with [base::expand.grid()]. In case some parameter is already
+set in `obj$params`, the `obj$design` is used and the `obj$params` parameter is ignored.}
 
 \item{\code{step}}{Function or list of functions. Adds a simulation step, or
 returns the currently defined steps when accessed without assignment.
