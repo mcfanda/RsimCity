@@ -120,3 +120,138 @@ plot_by_method <- function(data,
 
   return(p)
 }
+
+
+#' Plot columns matching a name pattern against an x variable
+#'
+#' Plots several numeric columns whose names match a given pattern, such as
+#' `".SE"` or `".p"`, against a selected x variable. Values are aggregated by
+#' the x variable before plotting.
+#'
+#' @param data A `data.frame`.
+#' @param xvar Character string. Name of the variable to use on the x-axis.
+#' @param pattern Character string. Pattern used to select columns. Passed to
+#'   `grep()`. For example, `".SE"` selects columns such as `"po.SE"`,
+#'   `"ca.SE"`, and `"fu.SE"`.
+#' @param fun Function used to aggregate values over rows with the same value of
+#'   `xvar`. Default is `mean`.
+#' @param na.rm Logical. Should missing values be removed before aggregation?
+#'   Default is `TRUE`.
+#' @param fixed Logical. Passed to `grep()`. If `TRUE`, `pattern` is matched as
+#'   plain text rather than as a regular expression. Default is `TRUE`.
+#' @param xlabel Optional character string. Label for the x-axis. If `NULL`,
+#'   `xvar` is used.
+#' @param ylabel Optional character string. Label for the y-axis. If `NULL`,
+#'   `pattern` is used.
+#' @param title Optional character string. Plot title.
+#' @param line Logical. If `TRUE`, lines are drawn. Default is `TRUE`.
+#' @param points Logical. If `TRUE`, points are drawn. Default is `TRUE`.
+#'
+#' @details
+#' The function identifies all columns whose names match `pattern`, reshapes
+#' them internally to long format, aggregates the values by `xvar` and column
+#' name, and then plots one line per matched column.
+#'
+#' This is useful for comparing quantities such as different standard errors,
+#' p-values, or test statistics stored in separate columns.
+#'
+#' @return
+#' A `ggplot` object.
+#'
+#' @examples
+#' \dontrun{
+#' plot_by_columns(results_ubc, xvar = "N", pattern = ".SE")
+#'
+#' plot_by_columns(results_ubc, xvar = "rho", pattern = ".p")
+#'
+#' plot_by_columns(
+#'   data = results_ubc,
+#'   xvar = "N",
+#'   pattern = ".SE",
+#'   ylabel = "Standard error",
+#'   title = "Estimated SE by sample size"
+#' )
+#' }
+#'
+#' @export
+plot_by_columns <- function(data,
+                                 xvar,
+                                 pattern,
+                                 fun = mean,
+                                 na.rm = TRUE,
+                                 fixed = TRUE,
+                                 xlabel = NULL,
+                                 ylabel = NULL,
+                                 title = NULL,
+                                 line = TRUE,
+                                 points = TRUE) {
+
+  if (!is.data.frame(data))
+    stop("data must be a data.frame")
+
+  if (!xvar %in% names(data))
+    stop("xvar not found in data: ", xvar)
+
+  matched <- grep(pattern, names(data), value = TRUE, fixed = fixed)
+
+  if (length(matched) == 0)
+    stop("No columns matched pattern: ", pattern)
+
+  non_numeric <- matched[!vapply(data[matched], is.numeric, logical(1))]
+
+  if (length(non_numeric) > 0) {
+    stop(
+      "The following matched columns are not numeric: ",
+      paste(non_numeric, collapse = ", ")
+    )
+  }
+
+  longdata <- data.frame(
+    x = rep(data[[xvar]], times = length(matched)),
+    variable = rep(matched, each = nrow(data)),
+    value = unlist(data[matched], use.names = FALSE),
+    stringsAsFactors = FALSE
+  )
+
+  aggdata <- stats::aggregate(
+    longdata$value,
+    by = list(
+      x = longdata$x,
+      variable = longdata$variable
+    ),
+    FUN = function(z) fun(z, na.rm = na.rm)
+  )
+
+  names(aggdata)[3] <- "value"
+
+  aggdata$variable <- factor(aggdata$variable, levels = matched)
+
+  p <- ggplot2::ggplot(
+    aggdata,
+    ggplot2::aes(
+      x = x,
+      y = value,
+      color = variable,
+      group = variable
+    )
+  )
+
+  if (line) {
+    p <- p + ggplot2::geom_line(linewidth = 1)
+  }
+
+  if (points) {
+    p <- p + ggplot2::geom_point(size = 2)
+  }
+
+  p <- p +
+    ggplot2::labs(
+      x = if (is.null(xlabel)) xvar else xlabel,
+      y = if (is.null(ylabel)) pattern else ylabel,
+      color = "Variable",
+      title = title
+    ) +
+    ggplot2::theme_classic()
+
+  return(p)
+}
