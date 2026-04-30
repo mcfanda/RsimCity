@@ -53,7 +53,11 @@ runner$experiment(Rep = 100)
 \item{\code{info}}{List. Optional list for storing user-defined information.}
 
 \item{\code{parallel}}{Logical. If `TRUE`, conditions are evaluated in parallel using
-`future::multisession`; otherwise they are evaluated sequentially.}
+`future::multisession`; otherwise they are evaluated sequentially. Processes are
+ spawn per design cell, so each design cell is sent to a different session.
+ This means that a design with a single cell (e.g. `obj$design<-list(N=100)` and `obj$experiment(Rep=1200)`) is not
+ evaluated in parallel, but all `Rep` repetitions are handle with a single session.
+ To parallelize a single cell design (or designs with very few cells), replicate the cell (e.g. `obj$design<-list(N=c(100,100,100)` and `obj$experiment(Rep=400)`)}
 }
 \if{html}{\out{</div>}}
 }
@@ -73,7 +77,7 @@ Each function receives the argument `data` from the previous step
 If obj$step<-list(a=fun,b=fun) is a list of functions, the functions are
 run in parallel, each with the previous step `data` as an argument.
 If the simcity Runner object is needed by the function, add `simcity=` argument to the function
-and then it can be accessed as `simcity$param`, where `param` is any method or variable
+and then it can be accessed as `simcity$foo`, where `foo` is any method or variable
 exposed by the Runner.}
 
 \item{\code{aggregate}}{Function. Adds an aggregate function, or returns the

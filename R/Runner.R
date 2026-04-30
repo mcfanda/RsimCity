@@ -420,7 +420,7 @@ Runner <- R6::R6Class(
             do.call(private$.one_step, p)
           })
 
-          data <- do.call(cbind, alist)
+          data <- alist
         }
       }
 

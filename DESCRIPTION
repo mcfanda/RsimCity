@@ -1,7 +1,7 @@
 Package: Rsimcity
 Type: Package
 Title: R6 suite for simulations
-Version: 0.1.0
+Version: 0.0.3
 Authors@R: c(
     person(
       "Marcello", "Gallucci",
