@@ -486,7 +486,6 @@ Runner <- R6::R6Class(
       }
 
       results <- bind_list_cols(results, args)
-
       return(results)
     }
   ),

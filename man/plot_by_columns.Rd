@@ -7,15 +7,19 @@
 plot_by_columns(
   data,
   xvar,
-  pattern,
+  pattern = NULL,
+  varsname = NULL,
   fun = mean,
   na.rm = TRUE,
-  fixed = TRUE,
+  fixed = FALSE,
   xlabel = NULL,
   ylabel = NULL,
+  legend_labels = NULL,
   title = NULL,
   line = TRUE,
-  points = TRUE
+  points = TRUE,
+  colors = NULL,
+  linetypes = NULL
 )
 }
 \arguments{

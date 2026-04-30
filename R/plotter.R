@@ -176,34 +176,42 @@ plot_by_method <- function(data,
 #' @export
 plot_by_columns <- function(data,
                                  xvar,
-                                 pattern,
+                                 pattern=NULL,
+                                 varsname=NULL,
                                  fun = mean,
                                  na.rm = TRUE,
-                                 fixed = TRUE,
+                                 fixed = FALSE,
                                  xlabel = NULL,
                                  ylabel = NULL,
+                                 legend_labels=NULL,
                                  title = NULL,
                                  line = TRUE,
-                                 points = TRUE) {
+                                 points = TRUE,
+                                 colors = NULL,
+                                 linetypes = NULL) {
 
   if (!is.data.frame(data))
     stop("data must be a data.frame")
 
   if (!xvar %in% names(data))
     stop("xvar not found in data: ", xvar)
+  if (!is.null(pattern)) {
+      matched <- grep(pattern, names(data), value = TRUE, fixed = fixed)
 
-  matched <- grep(pattern, names(data), value = TRUE, fixed = fixed)
+      if (length(matched) == 0)
+        stop("No columns matched pattern: ", pattern)
 
-  if (length(matched) == 0)
-    stop("No columns matched pattern: ", pattern)
+        non_numeric <- matched[!vapply(data[matched], is.numeric, logical(1))]
 
-  non_numeric <- matched[!vapply(data[matched], is.numeric, logical(1))]
-
-  if (length(non_numeric) > 0) {
-    stop(
-      "The following matched columns are not numeric: ",
-      paste(non_numeric, collapse = ", ")
-    )
+        if (length(non_numeric) > 0) {
+          stop(
+            "The following matched columns are not numeric: ",
+            paste(non_numeric, collapse = ", ")
+          )
+        }
+  } else {
+    if (is.null(varsname)) stop("Please specify the columns to plot either with `pattern` or with `varsname`")
+    matched <- varsname
   }
 
   longdata <- data.frame(
@@ -237,11 +245,44 @@ plot_by_columns <- function(data,
   )
 
   if (line) {
-    p <- p + ggplot2::geom_line(linewidth = 1)
+    if (is.null(linetypes)) {
+      p <- p + ggplot2::geom_line(linewidth = 1, linetype = "solid")
+    } else {
+      if (length(linetypes) < length(matched)) {
+        stop(
+          "linetypes has length ", length(linetypes),
+          " but there are ", length(matched), " matched columns"
+        )
+      }
+
+      linetypes <- linetypes[seq_along(matched)]
+      names(linetypes) <- matched
+
+      p <- p +
+        ggplot2::geom_line(
+          ggplot2::aes(linetype = variable),
+          linewidth = 1
+        ) +
+        ggplot2::scale_linetype_manual(values = linetypes)
+    }
   }
 
   if (points) {
     p <- p + ggplot2::geom_point(size = 2)
+  }
+
+  if (!is.null(colors)) {
+    if (length(colors) < length(matched)) {
+      stop(
+        "colors has length ", length(colors),
+        " but there are ", length(matched), " matched columns"
+      )
+    }
+
+    colors <- colors[seq_along(matched)]
+    names(colors) <- matched
+
+    p <- p + ggplot2::scale_color_manual(values = colors)
   }
 
   p <- p +
@@ -249,9 +290,22 @@ plot_by_columns <- function(data,
       x = if (is.null(xlabel)) xvar else xlabel,
       y = if (is.null(ylabel)) pattern else ylabel,
       color = "Variable",
+      linetype = "Variable",
       title = title
-    ) +
-    ggplot2::theme_classic()
+    )
+
+  if (!is.null(legend_labels)) {
+    if (length(legend_labels) < length(matched)) {
+      stop(
+        "legend_labels has length ", length(legend_labels),
+        " but there are ", length(matched), " matched columns"
+      )
+    }
+
+    legend_labels <- legend_labels[seq_along(matched)]
+    names(legend_labels) <- matched
+  }
+  p <- p +  ggplot2::theme_classic()
 
   return(p)
 }

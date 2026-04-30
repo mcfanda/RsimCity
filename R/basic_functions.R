@@ -63,15 +63,28 @@ correlated_sample <- function(N, R, mu = 0, sd = 1, seed = NULL) {
   as.data.frame(X)
 }
 
-
 bind_list_cols <- function(df, x) {
-  x <- x[sapply(x, function(z) is.numeric(z) || is.character(z))]
+
+  if (!is.data.frame(df))
+    stop("df must be a data.frame")
+
+  keep <- vapply(x, function(z) {
+    (is.numeric(z) || is.character(z) || is.logical(z)) && length(z) == 1
+  }, logical(1))
+
+  x <- x[keep]
+
+  if (length(x) == 0)
+    return(df)
+
   xdf <- as.data.frame(x, stringsAsFactors = FALSE)
-  xdf <- xdf[rep(1, nrow(df)), , drop = FALSE]  # repeat across rows
+
+  xdf <- xdf[rep(1, nrow(df)), , drop = FALSE]
   rownames(xdf) <- NULL
+  rownames(df) <- NULL
+
   cbind(xdf, df)
 }
-
 #' Count elements
 #'
 #' @description
