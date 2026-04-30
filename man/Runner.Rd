@@ -20,6 +20,11 @@ is passed to that argument.
 
 Aggregate functions are applied after the replications for one condition have
 been completed. Their formal arguments are matched in the same way.
+
+Experiments can be run in parallel using the [future] package.
+`Runner` prepares the parallel sessions and collects the results.
+Functions defined in `.GlobalEnv` are exported to the parallel sessions,
+so user-defined functions can be used by the experiment code.
 }
 \examples{
 runner <- Runner$new("example")

@@ -18,6 +18,11 @@
 #' Aggregate functions are applied after the replications for one condition have
 #' been completed. Their formal arguments are matched in the same way.
 #'
+#' Experiments can be run in parallel using the [future] package.
+#' `Runner` prepares the parallel sessions and collects the results.
+#' Functions defined in `.GlobalEnv` are exported to the parallel sessions,
+#' so user-defined functions can be used by the experiment code.
+#'
 #' @field name Character. Name of the simulation runner.
 #' @field debug Integer. Debugging level. Higher values print more information.
 #' @field info List. Optional list for storing user-defined information.
@@ -144,7 +149,7 @@ Runner <- R6::R6Class(
           Rep = Rep,
           design_params = one
         )
-
+        one$.Rep <- Rep
         private$.run_aggregates(data, one)
       }
 
@@ -328,7 +333,7 @@ Runner <- R6::R6Class(
           return(NULL)
         }
 
-        data$RepId <- i
+        data$.RepId <- i
         data
       })
 
@@ -349,6 +354,7 @@ Runner <- R6::R6Class(
     test_aggregates = function(Rep = 10) {
       results <- self$one_cycle(Rep = Rep)
       p <- private$.params
+      p$.Rep<-Rep
       results <- private$.run_aggregates(results, p)
       return(results)
     },
@@ -392,20 +398,20 @@ Runner <- R6::R6Class(
     .design = list(),
     .steps  = list(),
     .aggregates = list(),
-
+    .reserved   = list(".Rep",".RepId"),
     .one_run = function(one) {
       data <- NULL
       j <- 0
 
+
+
       for (step in private$.steps) {
         j <- j + 1
-        p <- c(private$.params, one)
+        p <- merge_params(private$.params, one)
         p$data <- data
-
         if (is.function(step)) {
           if (self$debug > 1)
             cat("Exec step: ", j, "\n")
-
           p$fun <- step
           data <- do.call(private$.one_step, p)
         }
@@ -492,9 +498,8 @@ Runner <- R6::R6Class(
       if (missing(alist)) {
         private$.params
       } else {
-        if (is.null(names(alist)))
-          stop("obj$params must be a named list")
-
+        check_named_not_reserved(alist,private$.reserved)
+        ## all good, digest
         lapply(names(alist), function(x) private$.params[[x]] <- alist[[x]])
       }
     },
@@ -506,12 +511,8 @@ Runner <- R6::R6Class(
       if (missing(alist)) {
         private$.design
       } else {
-        if (is.null(names(alist)))
-          stop("obj$design must be a named list"
-               )
-        private$.params <- private$.params[
-          setdiff(names(private$.params), names(alist))
-        ]
+
+        check_named_not_reserved(alist,private$.reserved)
 
         lapply(names(alist), function(x) private$.design[[x]] <- alist[[x]])
       }

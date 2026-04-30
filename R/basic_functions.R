@@ -121,3 +121,36 @@ numColMean <- function(x) {
   exe <- basename(commandArgs()[1])
   grepl("^Rscript", exe)
 }
+
+
+### helpers
+
+check_named_not_reserved <- function(alist, reserved) {
+
+  if (!is.list(alist))
+    stop("`alist` must be a list", call. = FALSE)
+
+  nms <- names(alist)
+
+  if (is.null(nms) || !all(nzchar(nms))) {
+    stop("`alist` must be a fully named list", call. = FALSE)
+  }
+
+  bad <- nms %in% reserved
+
+  if (any(bad)) {
+    stop(
+      "These names are reserved and cannot be used: ",
+      paste(nms[bad], collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  TRUE
+}
+
+
+merge_params <- function(params, one) {
+  params <- params[setdiff(names(params), names(one))]
+  c(params, one)
+}
