@@ -82,7 +82,6 @@ bind_list_cols <- function(df, x) {
   xdf <- xdf[rep(1, nrow(df)), , drop = FALSE]
   rownames(xdf) <- NULL
   rownames(df) <- NULL
-
   cbind(xdf, df)
 }
 #' Count elements
@@ -110,10 +109,20 @@ numColMean <- function(x) {
   as.data.frame(means, stringsAsFactors = FALSE, check.names = FALSE)
 }
 
+print_params <-function(x) {
+  lapply(x, function(z) {
+    if ((is.numeric(z) || is.character(z) || is.logical(z)) && length(z) == 1)
+       return(x)
+  else
+       return(class(x)[1])
+  })
+}
+
+
 
 ######### this is for parellel to work fine
 
-.collect_user_functions <- function(env = .GlobalEnv) {
+.collect_user_objects <- function(env = .GlobalEnv, objects = NULL) {
 
   nms <- ls(envir = env, all.names = TRUE)
 
@@ -121,11 +130,25 @@ numColMean <- function(x) {
     return(list())
   }
 
+  if (!is.null(objects)) {
+    missing <- setdiff(objects, nms)
+
+    if (length(missing) > 0) {
+      stop(
+        "These requested objects were not found in `env`: ",
+        paste(missing, collapse = ", "),
+        call. = FALSE
+      )
+    }
+  }
+
   objs <- mget(nms, envir = env, inherits = FALSE)
 
-  objs[
-    vapply(objs, is.function, logical(1))
-  ]
+  is_fun <- vapply(objs, is.function, logical(1))
+
+  keep_extra <- names(objs) %in% objects
+
+  objs[is_fun | keep_extra]
 }
 
 ### this is just aesthetics

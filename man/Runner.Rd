@@ -63,6 +63,11 @@ runner$experiment(Rep = 100)
  This means that a design with a single cell (e.g. `obj$design<-list(N=100)` and `obj$experiment(Rep=1200)`) is not
  evaluated in parallel, but all `Rep` repetitions are handle with a single session.
  To parallelize a single cell design (or designs with very few cells), replicate the cell (e.g. `obj$design<-list(N=c(100,100,100)` and `obj$experiment(Rep=400)`)}
+
+\item{\code{collect}}{List. A list of names of object in the `.GlobalEnv` that should be passed to the parallel processes.
+In fact, if `parallel=TRUE`, by default the Runner passes all functions in `.GlobalEnv` to the parallel processes,
+but not any other object type. Data frames or other objects should be explicetly passed with their names in
+`obj$collect`. It is ignored if `parallel=FALSE`.}
 }
 \if{html}{\out{</div>}}
 }
@@ -85,10 +90,12 @@ If the simcity Runner object is needed by the function, add `simcity=` argument 
 and then it can be accessed as `simcity$foo`, where `foo` is any method or variable
 exposed by the Runner.}
 
-\item{\code{aggregate}}{Function. Adds an aggregate function, or returns the
-currently defined aggregate functions when accessed without assignment.
+\item{\code{aggregate}}{Function(s). Adds an aggregate function, or returns the
+currently defined aggregate functions when accessed without assignment. Can be called repeatedly
+Each function should have the argoment `data`. The last function should return a [data.frame].
 Aggregating functions are sequentially run over the data obtained by
-the obj$step functions}
+the obj$step functions. Default is `as.data.frame(do.call(rbind,data))`. If no
+aggregation is required, `obj$aggregate<-FALSE` should be explicitly set.}
 }
 \if{html}{\out{</div>}}
 }
@@ -245,7 +252,7 @@ The result of one full step sequence.
 \if{html}{\out{<a id="method-simcity_runner-reset_steps"></a>}}
 \if{latex}{\out{\hypertarget{method-simcity_runner-reset_steps}{}}}
 \subsection{Method \code{reset_steps()}}{
-reset step functions.
+Reset step functions.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Runner$reset_steps()}\if{html}{\out{</div>}}
 }

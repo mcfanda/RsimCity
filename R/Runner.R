@@ -32,7 +32,10 @@
 #'    This means that a design with a single cell (e.g. `obj$design<-list(N=100)` and `obj$experiment(Rep=1200)`) is not
 #'    evaluated in parallel, but all `Rep` repetitions are handle with a single session.
 #'    To parallelize a single cell design (or designs with very few cells), replicate the cell (e.g. `obj$design<-list(N=c(100,100,100)` and `obj$experiment(Rep=400)`)
-#'
+#' @field collect List. A list of names of object in the `.GlobalEnv` that should be passed to the parallel processes.
+#'     In fact, if `parallel=TRUE`, by default the Runner passes all functions in `.GlobalEnv` to the parallel processes,
+#'     but not any other object type. Data frames or other objects should be explicetly passed with their names in
+#'     `obj$collect`. It is ignored if `parallel=FALSE`.
 #' @examples
 #' runner <- Runner$new("example")
 #'
@@ -65,7 +68,7 @@ Runner <- R6::R6Class(
     debug = 0,
     info = list(),
     parallel = FALSE,
-
+    collect = list(),
     #' @description
     #' Create a new simulation runner.
     #'
@@ -132,12 +135,14 @@ Runner <- R6::R6Class(
         future::plan(future::sequential)
       }
 
-      params <- private$.params[setdiff(names(private$.params), names(private$.design))]
-      params <- c(params, private$.design)
-
+      .params <- private$.params[setdiff(names(private$.params), names(private$.design))]
+      .params <- c(.params, private$.design)
+      keep <- vapply(.params, function(z) {
+        (is.numeric(z) || is.character(z) || is.logical(z))
+      }, logical(1))
+      params<-.params[keep]
       egrid  <- expand.grid(params,stringsAsFactors = FALSE)
       .names <- names(egrid)
-
       ncond <- nrow(egrid)
       ntotal_runs <- ncond * Rep
 
@@ -215,7 +220,7 @@ Runner <- R6::R6Class(
 
       if (isTRUE(self$parallel)) {
 
-        user_fun_globals <- .collect_user_functions(.GlobalEnv)
+        user_fun_globals <- .collect_user_objects(.GlobalEnv, self$collect)
 
         future_globals <- c(
           list(
@@ -322,8 +327,9 @@ Runner <- R6::R6Class(
       one <- c(private$.params, design_params)
       .names <- names(one)
 
-      if (self$debug > 0)
-        cat("Exec run for ", Rep, " times", paste(.names, one, sep = "=", collapse = ", "), "\n")
+      if (self$debug > 0) {
+            cat("Exec run for ", Rep, " times", paste(.names, print_params(one), sep = "=", collapse = ", "), "\n")
+      }
 
       results <- lapply(seq_len(Rep), function(i) {
         data <- private$.one_run(one)
@@ -332,8 +338,10 @@ Runner <- R6::R6Class(
           fail[[length(fail) + 1]] <<- i
           return(NULL)
         }
-
-        data$.RepId <- i
+        if (is.data.frame(data))
+          data$.RepId <- i
+        else
+          attr(data,".RepId")<-i
         data
       })
 
@@ -354,7 +362,6 @@ Runner <- R6::R6Class(
     test_aggregates = function(Rep = 10) {
       results <- self$one_cycle(Rep = Rep)
       p <- private$.params
-      p$.Rep<-Rep
       results <- private$.run_aggregates(results, p)
       return(results)
     },
@@ -374,37 +381,36 @@ Runner <- R6::R6Class(
       one <- private$.params
       .names <- names(one)
 
-      if (self$debug > 0)
-        cat("Exec test run: ", paste(.names, one, sep = "=", collapse = ", "), "\n")
+      if (self$debug > 0) {
+        cat("Exec run for ", Rep, " times", paste(.names, print_params(one), sep = "=", collapse = ", "), "\n")
+      }
 
       data <- private$.one_run(one)
 
       return(data)
     },
-    #' @description
-    #' reset step functions.
+
+    #' @description Reset step functions.
     #'
     #' @return NULL.
     reset_steps = function() {
-      private$.steps<-list()
-      cat(self$name,": steps reset ok\n")
-
+      private$.steps <- list()
+      cat(self$name, ": steps reset ok\n")
     }
   ),
+
 
   private = list(
 
     .params = list(),
     .design = list(),
     .steps  = list(),
-    .aggregates = list(),
+    .aggregates = list(function(data) as.data.frame(do.call(rbind,data))),
+    .default_aggregate=TRUE,
     .reserved   = list(".Rep",".RepId"),
     .one_run = function(one) {
       data <- NULL
       j <- 0
-
-
-
       for (step in private$.steps) {
         j <- j + 1
         p <- merge_params(private$.params, one)
@@ -484,7 +490,7 @@ Runner <- R6::R6Class(
         args$data <- results
         results <- do.call(private$.one_step, args)
       }
-
+      print(results)
       results <- bind_list_cols(results, args)
       return(results)
     }
@@ -535,16 +541,24 @@ Runner <- R6::R6Class(
       }
     },
 
-    #' @field aggregate Function. Adds an aggregate function, or returns the
-    #'   currently defined aggregate functions when accessed without assignment.
+    #' @field aggregate Function(s). Adds an aggregate function, or returns the
+    #'   currently defined aggregate functions when accessed without assignment. Can be called repeatedly
+    #'   Each function should have the argoment `data`. The last function should return a [data.frame].
     #'   Aggregating functions are sequentially run over the data obtained by
-    #'   the obj$step functions
+    #'   the obj$step functions. Default is `as.data.frame(do.call(rbind,data))`. If no
+    #'   aggregation is required, `obj$aggregate<-FALSE` should be explicitly set.
     aggregate = function(afun) {
       if (missing(afun)) {
-        cat("You defined ", length(private$.aggregates), " for this sim\n")
+        cat("There are ", length(private$.aggregates), " aggregating functions for this sim\n")
         invisible(private$.aggregates)
       } else {
-        private$.aggregates[[length(private$.aggregates) + 1]] <- afun
+        if (isFALSE(afun))
+          private$.aggregates<-list()
+        else {
+          if (private$.default_aggregate) private$.aggregates<-list()
+          private$.aggregates[[length(private$.aggregates) + 1]] <- afun
+          private$.default_aggregate<-FALSE
+        }
       }
     }
   )
