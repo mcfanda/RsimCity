@@ -498,7 +498,6 @@ Runner <- R6::R6Class(
         args$data <- results
         results <- do.call(private$.one_step, args)
       }
-      print(results)
       results <- bind_list_cols(results, args)
       return(results)
     }
