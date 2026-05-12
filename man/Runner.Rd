@@ -62,7 +62,10 @@ runner$experiment(Rep = 100)
  spawn per design cell, so each design cell is sent to a different session.
  This means that a design with a single cell (e.g. `obj$design<-list(N=100)` and `obj$experiment(Rep=1200)`) is not
  evaluated in parallel, but all `Rep` repetitions are handle with a single session.
- To parallelize a single cell design (or designs with very few cells), replicate the cell (e.g. `obj$design<-list(N=c(100,100,100)` and `obj$experiment(Rep=400)`)}
+ To parallelize a single cell design (or designs with very few cells), replicate the cell (e.g. `obj$design<-list(N=c(100,100,100)` and `obj$experiment(Rep=400)`).}
+
+\item{\code{par_method}}{Character. If `parallel=TRUE` choose the method to go parallel: `multisession` (default) works in Windows and in Linux.
+`multicore` works in Linux.}
 
 \item{\code{collect}}{List. A list of names of object in the `.GlobalEnv` that should be passed to the parallel processes.
 In fact, if `parallel=TRUE`, by default the Runner passes all functions in `.GlobalEnv` to the parallel processes,
