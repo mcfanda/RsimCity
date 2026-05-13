@@ -114,19 +114,23 @@ Runner <- R6::R6Class(
     #'
     #' @return A data frame with the simulation results aggregated by design
     #'   condition. The returned object has attributes `"label"` and `"time"`.
-    experiment = function(Rep = 10, label = NULL, progress = TRUE) {
+    experiment = function(Rep = 1, label = NULL, progress = TRUE) {
 
-      if ((length(private$.params)) == 0)
-        stop("There are no parameters to run, please set it with obj$params")
+      .params <- private$.params[setdiff(names(private$.params), names(private$.design))]
+      .params <- c(.params, private$.design)
+      keep <- vapply(.params, function(z) {
+        (is.numeric(z) || is.character(z) || is.logical(z))
+      }, logical(1))
+      params<-.params[keep]
 
-      if ((length(private$.design)) == 0)
-        warning("There is no design to run, please set it with obj$design. This run is based on obj$params")
+      if ((length(params)) == 0)
+        stop("There are no parameters to run, please set it with obj$params or obj$design")
 
       if (length(private$.steps) == 0)
         stop("There is no function to run, please set it with obj$steps")
 
-      if (!requireNamespace("future", quietly = TRUE)) {
-        stop("Package 'future' is required")
+      if (self$parallel && !requireNamespace("future", quietly = TRUE)) {
+        stop("Package 'future' is required when obj$parallel = TRUE")
       }
 
       if (progress && !requireNamespace("progress", quietly = TRUE)) {
@@ -143,12 +147,7 @@ Runner <- R6::R6Class(
         future::plan(future::sequential)
       }
 
-      .params <- private$.params[setdiff(names(private$.params), names(private$.design))]
-      .params <- c(.params, private$.design)
-      keep <- vapply(.params, function(z) {
-        (is.numeric(z) || is.character(z) || is.logical(z))
-      }, logical(1))
-      params<-.params[keep]
+
       egrid  <- expand.grid(params,stringsAsFactors = FALSE)
       .names <- names(egrid)
       ncond <- nrow(egrid)
@@ -325,12 +324,6 @@ Runner <- R6::R6Class(
     one_cycle = function(Rep = 10, design_params = NULL) {
 
       fail <- list()
-
-      if ((length(private$.params)) == 0)
-        stop("There are no parameters to run, please set it with obj$params")
-
-      if (length(private$.steps) == 0)
-        stop("There is no function to run, please set it with obj$steps")
 
       one <- c(private$.params, design_params)
       .names <- names(one)

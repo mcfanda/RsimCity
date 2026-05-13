@@ -175,7 +175,7 @@ Invisibly returns `self`.
 \subsection{Method \code{experiment()}}{
 Run the full simulation experiment.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$experiment(Rep = 10, label = NULL, progress = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{Runner$experiment(Rep = 1, label = NULL, progress = TRUE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
