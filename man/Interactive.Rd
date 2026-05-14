@@ -11,7 +11,7 @@ The class does not run simulations itself. Instead,
 [Runner]`$experiment_interactive()` drives the simulation and calls
 `$update()` after each replication and `$update_agg()` after each condition
 completes. Results are visualised in a Shiny app using one or two
-user-supplied plotting functions.
+user-supplied plotting functions .
 }
 \details{
 **Basic workflow** (live plot only):

@@ -147,6 +147,7 @@ aggregated-results plot in [Interactive].}
 \item \href{#method-simcity_runner-experiment}{\code{Runner$experiment()}}
 \item \href{#method-simcity_runner-experiment_interactive}{\code{Runner$experiment_interactive()}}
 \item \href{#method-simcity_runner-one_cycle}{\code{Runner$one_cycle()}}
+\item \href{#method-simcity_runner-test_cycle}{\code{Runner$test_cycle()}}
 \item \href{#method-simcity_runner-test_aggregates}{\code{Runner$test_aggregates()}}
 \item \href{#method-simcity_runner-test_one}{\code{Runner$test_one()}}
 \item \href{#method-simcity_runner-reset_steps}{\code{Runner$reset_steps()}}
@@ -293,6 +294,26 @@ design parameters for this condition.}
 \subsection{Returns}{
 A data frame with one row per successful replication. Failed
   replications are stored in attribute `"fail"`.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-simcity_runner-test_cycle"></a>}}
+\if{latex}{\out{\hypertarget{method-simcity_runner-test_cycle}{}}}
+\subsection{Method \code{test_cycle()}}{
+Test a cycle of runs.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Runner$test_cycle(Rep = 10)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{Rep}}{Integer. Number of replications used for the test the cycle.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A data frame returned by cycle function.
 }
 }
 \if{html}{\out{<hr>}}
