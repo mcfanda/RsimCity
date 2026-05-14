@@ -63,15 +63,27 @@ correlated_sample <- function(N, R, mu = 0, sd = 1, seed = NULL) {
   as.data.frame(X)
 }
 
-
 bind_list_cols <- function(df, x) {
-  x <- x[sapply(x, function(z) is.numeric(z) || is.character(z))]
+
+  if (!is.data.frame(df))
+    stop("df must be a data.frame")
+
+  keep <- vapply(x, function(z) {
+    (is.numeric(z) || is.character(z) || is.logical(z)) && length(z) == 1
+  }, logical(1))
+
+  x <- x[keep]
+
+  if (length(x) == 0)
+    return(df)
+
   xdf <- as.data.frame(x, stringsAsFactors = FALSE)
-  xdf <- xdf[rep(1, nrow(df)), , drop = FALSE]  # repeat across rows
+
+  xdf <- xdf[rep(1, nrow(df)), , drop = FALSE]
   rownames(xdf) <- NULL
+  rownames(df) <- NULL
   cbind(xdf, df)
 }
-
 #' Count elements
 #'
 #' @description
@@ -97,10 +109,20 @@ numColMean <- function(x) {
   as.data.frame(means, stringsAsFactors = FALSE, check.names = FALSE)
 }
 
+print_params <-function(x) {
+  lapply(x, function(z) {
+    if ((is.numeric(z) || is.character(z) || is.logical(z)) && length(z) == 1)
+       return(x)
+  else
+       return(class(x)[1])
+  })
+}
+
+
 
 ######### this is for parellel to work fine
 
-.collect_user_functions <- function(env = .GlobalEnv) {
+.collect_user_objects <- function(env = .GlobalEnv, objects = NULL) {
 
   nms <- ls(envir = env, all.names = TRUE)
 
@@ -108,11 +130,25 @@ numColMean <- function(x) {
     return(list())
   }
 
+  if (!is.null(objects)) {
+    missing <- setdiff(objects, nms)
+
+    if (length(missing) > 0) {
+      stop(
+        "These requested objects were not found in `env`: ",
+        paste(missing, collapse = ", "),
+        call. = FALSE
+      )
+    }
+  }
+
   objs <- mget(nms, envir = env, inherits = FALSE)
 
-  objs[
-    vapply(objs, is.function, logical(1))
-  ]
+  is_fun <- vapply(objs, is.function, logical(1))
+
+  keep_extra <- names(objs) %in% objects
+
+  objs[is_fun | keep_extra]
 }
 
 ### this is just aesthetics
@@ -120,4 +156,37 @@ numColMean <- function(x) {
 .running_in_rscript <- function() {
   exe <- basename(commandArgs()[1])
   grepl("^Rscript", exe)
+}
+
+
+### helpers
+
+check_named_not_reserved <- function(alist, reserved) {
+
+  if (!is.list(alist))
+    stop("`alist` must be a list", call. = FALSE)
+
+  nms <- names(alist)
+
+  if (is.null(nms) || !all(nzchar(nms))) {
+    stop("`alist` must be a fully named list", call. = FALSE)
+  }
+
+  bad <- nms %in% reserved
+
+  if (any(bad)) {
+    stop(
+      "These names are reserved and cannot be used: ",
+      paste(nms[bad], collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  TRUE
+}
+
+
+merge_params <- function(params, one) {
+  params <- params[setdiff(names(params), names(one))]
+  c(params, one)
 }
