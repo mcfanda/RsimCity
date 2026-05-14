@@ -7,8 +7,12 @@
 `Runner` is an R6 class used to define and run simulation experiments.
 
 A runner stores fixed parameters, experimental design conditions, simulation
-steps, and optional aggregate functions. The main method is `$experiment()`,
-which runs all design conditions for a given number of replications.
+steps, and optional aggregate functions. The main entry points are:
+
+* `$experiment()` — runs all design conditions for a given number of
+  replications and returns a data frame of aggregated results.
+* `$experiment_interactive()` — same pipeline, but feeds results into an
+  [Interactive] monitor as they are produced, enabling live Shiny plots.
 }
 \details{
 Simulation steps are functions whose formal arguments are matched by name
@@ -19,7 +23,15 @@ If a step function has an argument named `simcity`, the runner object itself
 is passed to that argument.
 
 Aggregate functions are applied after the replications for one condition have
-been completed. Their formal arguments are matched in the same way.
+been completed. Their formal arguments are matched in the same way. The last
+aggregate function must return a [data.frame]. The default aggregate is
+`as.data.frame(do.call(rbind, data))`. Use `obj$aggregate <- FALSE` to
+disable aggregation entirely.
+
+In interactive mode, the aggregate pipeline is also run at the end of each
+condition and the result is pushed to [Interactive]`$update_agg()`, so an
+optional second plot function can visualise per-condition summaries as they
+accumulate.
 
 Experiments can be run in parallel using the [future] package.
 `Runner` prepares the parallel sessions and collects the results.
@@ -44,7 +56,26 @@ runner$test_one()
 runner$test_aggregates(Rep = 5)
 
 \dontrun{
+# Batch experiment
 runner$experiment(Rep = 100)
+
+# Live interactive experiment (requires shiny and later)
+mon <- Interactive$new(
+  plot_fun = function(data, step) {
+    ggplot2::ggplot(data, ggplot2::aes(x = x)) +
+      ggplot2::geom_histogram(bins = 30) +
+      ggplot2::theme_minimal()
+  },
+  agg_plot_fun = function(data, step) {
+    ggplot2::ggplot(data, ggplot2::aes(x = mu, y = mean_x)) +
+      ggplot2::geom_col() +
+      ggplot2::theme_minimal()
+  }
+)
+mon$set_start_fun(function(obj) {
+  runner$experiment_interactive(interactive = obj, Rep = 100)
+})
+mon$run(viewer = "pane")
 }
 
 }
@@ -57,20 +88,21 @@ runner$experiment(Rep = 100)
 
 \item{\code{info}}{List. Optional list for storing user-defined information.}
 
-\item{\code{parallel}}{Logical. If `TRUE`, conditions are evaluated in parallel using
-`future::multisession`; otherwise they are evaluated sequentially. Processes are
- spawn per design cell, so each design cell is sent to a different session.
- This means that a design with a single cell (e.g. `obj$design<-list(N=100)` and `obj$experiment(Rep=1200)`) is not
- evaluated in parallel, but all `Rep` repetitions are handle with a single session.
- To parallelize a single cell design (or designs with very few cells), replicate the cell (e.g. `obj$design<-list(N=c(100,100,100)` and `obj$experiment(Rep=400)`).}
+\item{\code{parallel}}{Logical. If `TRUE`, conditions are evaluated in parallel
+using `future::multisession` (or `future::multicore` on Linux); otherwise
+they are evaluated sequentially. One process is spawned per design cell,
+so a single-cell design is not parallelised. To parallelise it, replicate
+the cell, e.g. `obj$design <- list(N = c(100, 100, 100))` with
+`obj$experiment(Rep = 400)`.}
 
-\item{\code{par_method}}{Character. If `parallel=TRUE` choose the method to go parallel: `multisession` (default) works in Windows and in Linux.
-`multicore` works in Linux.}
+\item{\code{par_method}}{Character. Parallel backend when `parallel = TRUE`.
+`"multisession"` (default) works on Windows and Linux; `"multicore"`
+works on Linux only.}
 
-\item{\code{collect}}{List. A list of names of object in the `.GlobalEnv` that should be passed to the parallel processes.
-In fact, if `parallel=TRUE`, by default the Runner passes all functions in `.GlobalEnv` to the parallel processes,
-but not any other object type. Data frames or other objects should be explicetly passed with their names in
-`obj$collect`. It is ignored if `parallel=FALSE`.}
+\item{\code{collect}}{List. Names of objects in `.GlobalEnv` to export to parallel
+workers. By default all functions in `.GlobalEnv` are exported; non-function
+objects (data frames, etc.) must be listed here explicitly. Ignored when
+`parallel = FALSE`.}
 }
 \if{html}{\out{</div>}}
 }
@@ -94,11 +126,15 @@ and then it can be accessed as `simcity$foo`, where `foo` is any method or varia
 exposed by the Runner.}
 
 \item{\code{aggregate}}{Function(s). Adds an aggregate function, or returns the
-currently defined aggregate functions when accessed without assignment. Can be called repeatedly
-Each function should have the argoment `data`. The last function should return a [data.frame].
-Aggregating functions are sequentially run over the data obtained by
-the obj$step functions. Default is `as.data.frame(do.call(rbind,data))`. If no
-aggregation is required, `obj$aggregate<-FALSE` should be explicitly set.}
+currently defined aggregate functions when accessed without assignment.
+Can be called repeatedly to chain multiple functions. Each function
+should accept a `data` argument; the last one must return a
+[data.frame]. Aggregating functions are applied sequentially to the
+data collected by `$step` functions. The default is
+`as.data.frame(do.call(rbind, data))`. To disable aggregation, set
+`obj$aggregate <- FALSE`. The same pipeline is also run at the end of
+each condition during `$experiment_interactive()` to feed the
+aggregated-results plot in [Interactive].}
 }
 \if{html}{\out{</div>}}
 }
@@ -199,10 +235,41 @@ A data frame with the simulation results aggregated by design
 \if{html}{\out{<a id="method-simcity_runner-experiment_interactive"></a>}}
 \if{latex}{\out{\hypertarget{method-simcity_runner-experiment_interactive}{}}}
 \subsection{Method \code{experiment_interactive()}}{
+Run the simulation experiment with live Shiny updates.
+
+Executes the same step and aggregate pipeline as `$experiment()`, but
+feeds results into an [Interactive] monitor as each replication completes
+rather than collecting everything at the end. The event loop is driven by
+[later::later()], so the Shiny app remains responsive while the simulation
+runs.
+
+After all replications for a condition are done, the aggregate pipeline
+(`$aggregate`) is applied to the accumulated data and the result is pushed
+to `interactive$update_agg()`. If the [Interactive] object has an
+`agg_plot_fun` set, this triggers a redraw of the "Aggregated" tab.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{Runner$experiment_interactive(interactive, Rep = 1, delay = 0, reset = TRUE)}\if{html}{\out{</div>}}
 }
 
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{interactive}}{An [Interactive] object. Receives live updates via
+`$update()` and per-condition aggregated results via `$update_agg()`.}
+
+\item{\code{Rep}}{Integer. Number of replications per design condition.}
+
+\item{\code{delay}}{Numeric. Seconds to wait between replications. Increase for
+smoother animation; use `0` for maximum throughput.}
+
+\item{\code{reset}}{Logical. If `TRUE` (default), call `interactive$reset()`
+before starting so previous data is cleared.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+Invisibly returns the `interactive` object.
+}
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-simcity_runner-one_cycle"></a>}}

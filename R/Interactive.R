@@ -2,43 +2,52 @@
 #'
 #' @description
 #' `Interactive` is an R6 class used to display simulation results while they
-#' are being produced.
+#' are being produced by a [Runner].
 #'
-#' The class does not run simulations by itself. Instead, an external simulation
-#' function should call `$update()` whenever new results are available.
-#'
-#' The object stores the accumulated simulation output and displays it in a
-#' Shiny app using a user-supplied plotting function.
+#' The class does not run simulations itself. Instead,
+#' [Runner]`$experiment_interactive()` drives the simulation and calls
+#' `$update()` after each replication and `$update_agg()` after each condition
+#' completes. Results are visualised in a Shiny app using one or two
+#' user-supplied plotting functions.
 #'
 #' @details
-#' The intended workflow is:
+#' **Basic workflow** (live plot only):
 #'
-#' ```
+#' ```r
 #' mon <- Interactive$new(plot_fun = my_plot)
 #'
 #' mon$set_start_fun(function(obj) {
-#'   runner$experiment_interactive(
-#'     interactive = obj,
-#'     Rep = 100,
-#'     delay = 0.01,
-#'     reset = FALSE
-#'   )
+#'   runner$experiment_interactive(interactive = obj, Rep = 100)
 #' })
 #'
-#' mon$run(port = 3838)
+#' mon$run(viewer = "pane")
 #' ```
 #'
-#' The Shiny app provides buttons to start, stop, continue, and reset the live
-#' monitor.
+#' **Workflow with an aggregated-results plot:**
 #'
-#' The plotting function is called with two positional arguments:
-#'
-#' ```
-#' plot_fun(data, step)
+#' ```r
+#' mon <- Interactive$new(plot_fun = my_plot, agg_plot_fun = my_agg_plot)
 #' ```
 #'
-#' where `data` is the accumulated simulation output and `step` is the number of
-#' updates received by the monitor.
+#' When `agg_plot_fun` is supplied the Shiny app shows two tabs: **"Live"**
+#' displays the current-condition raw data updated every replication;
+#' **"Aggregated"** displays the output of the runner's aggregate pipeline,
+#' updated once per completed condition and accumulated across conditions.
+#'
+#' The Shiny app provides Start, Stop, Continue, and Reset buttons.
+#'
+#' Both plotting functions are called with two positional arguments:
+#'
+#' ```r
+#' plot_fun(data, step)      # `data` = current-condition accumulated output
+#' agg_plot_fun(agg_x, step) # `agg_x` = aggregated output, all conditions so far
+#' ```
+#'
+#' where `step` is the total number of per-replication updates received.
+#'
+#' The `viewer` argument to `$run()` controls where the app opens:
+#' `"pane"` (RStudio Viewer), `"browser"` (system browser),
+#' `"dialog"` (RStudio external window), or `"none"`.
 #'
 #' @field plot_fun Function. Function used to create the live plot. Called as
 #'   `plot_fun(data, step)` where `data` is the current-condition accumulated output.
@@ -55,6 +64,11 @@
 #' @field dirty_plot Logical. Whether the plot needs to be redrawn.
 #' @field redraw_pending Logical. Whether a plot redraw has already been scheduled.
 #' @field run_id Integer. Internal counter used to invalidate old scheduled callbacks.
+#' @field info List. General-purpose list for user data. Also used internally
+#'   to store the error message (`info$error`) when a step throws an unhandled
+#'   error during `$experiment_interactive()`.
+#' @field condition Named list or `NULL`. The current design condition being
+#'   processed, set automatically by [Runner]`$experiment_interactive()`.
 #' @field title Character. Title shown in the Shiny app.
 #' @field plot_refresh_ms Numeric. Minimum delay, in milliseconds, between plot redraws.
 #' @field plot_height Character. Height of the Shiny plot output.
@@ -62,34 +76,40 @@
 #'
 #' @examples
 #' \dontrun{
+#' # Live plot: histogram of current-condition estimates
 #' plot_fun <- function(data, step) {
-#'
 #'   if (is.null(data) || !is.data.frame(data)) {
-#'     return(
-#'       ggplot2::ggplot() +
-#'         ggplot2::labs(title = "Waiting for data") +
-#'         ggplot2::theme_minimal()
-#'     )
+#'     return(ggplot2::ggplot() + ggplot2::labs(title = "Waiting for data"))
 #'   }
-#'
 #'   ggplot2::ggplot(data, ggplot2::aes(x = estimate)) +
 #'     ggplot2::geom_histogram(bins = 40) +
 #'     ggplot2::labs(title = paste("Step:", step)) +
 #'     ggplot2::theme_minimal()
 #' }
 #'
-#' mon <- Interactive$new(plot_fun = plot_fun)
+#' # Aggregated plot: mean estimate per completed condition
+#' # (requires runner$aggregate to return a data frame with `mean_estimate`)
+#' agg_plot_fun <- function(data, step) {
+#'   if (is.null(data) || !is.data.frame(data)) {
+#'     return(ggplot2::ggplot() + ggplot2::labs(title = "Waiting for aggregated data"))
+#'   }
+#'   ggplot2::ggplot(data, ggplot2::aes(x = condition, y = mean_estimate)) +
+#'     ggplot2::geom_col() +
+#'     ggplot2::labs(title = paste("Aggregated — conditions done:", nrow(data))) +
+#'     ggplot2::theme_minimal()
+#' }
+#'
+#' mon <- Interactive$new(
+#'   plot_fun     = plot_fun,
+#'   agg_plot_fun = agg_plot_fun,
+#'   title        = "Live simulation monitor"
+#' )
 #'
 #' mon$set_start_fun(function(obj) {
-#'   runner$experiment_interactive(
-#'     interactive = obj,
-#'     Rep = 100,
-#'     delay = 0.01,
-#'     reset = FALSE
-#'   )
+#'   runner$experiment_interactive(interactive = obj, Rep = 100, delay = 0.01)
 #' })
 #'
-#' mon$run(port = 3838, viewer = "pane")
+#' mon$run(viewer = "pane")   # or "browser" / "dialog" / "none"
 #' }
 #'
 #' @export
@@ -306,6 +326,17 @@ Interactive <- R6::R6Class(
 
       invisible(self)
     },
+    #' @description
+    #' Clear the current-condition live data.
+    #'
+    #' Clears `x` so the live plot starts fresh for the next condition.
+    #' Aggregated data (`agg_x`) is **not** cleared; use `$reset()` for that.
+    #' Called automatically by [Runner]`$experiment_interactive()` between
+    #' conditions.
+    #'
+    #' @param reset_step Logical. If `TRUE` (default), reset `step` to zero.
+    #'
+    #' @return Invisibly returns `self`.
     clear_data = function(reset_step = TRUE) {
 
       self$x <- NULL
