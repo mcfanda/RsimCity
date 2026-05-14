@@ -543,6 +543,16 @@ Runner <- R6::R6Class(
 
       return(results)
     },
+    #' @description
+    #' Test a cycle of runs.
+    #'
+    #' @param Rep Integer. Number of replications used for the test the cycle.
+    #'
+    #' @return A data frame returned by cycle function.
+    test_cycle = function(Rep = 10) {
+      results <- self$one_cycle(Rep = Rep)
+      return(results)
+    },
 
     #' @description
     #' Test aggregate functions.
@@ -596,7 +606,7 @@ Runner <- R6::R6Class(
     .params = list(),
     .design = list(),
     .steps  = list(),
-    .aggregates = list(function(data) as.data.frame(do.call(rbind,data))),
+    .aggregates = list(),
     .default_aggregate=TRUE,
     .reserved   = list(".Rep",".RepId"),
     .one_run = function(one) {
