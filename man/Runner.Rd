@@ -109,6 +109,7 @@ aggregation is required, `obj$aggregate<-FALSE` should be explicitly set.}
 \item \href{#method-simcity_runner-methods}{\code{Runner$methods()}}
 \item \href{#method-simcity_runner-print}{\code{Runner$print()}}
 \item \href{#method-simcity_runner-experiment}{\code{Runner$experiment()}}
+\item \href{#method-simcity_runner-experiment_interactive}{\code{Runner$experiment_interactive()}}
 \item \href{#method-simcity_runner-one_cycle}{\code{Runner$one_cycle()}}
 \item \href{#method-simcity_runner-test_aggregates}{\code{Runner$test_aggregates()}}
 \item \href{#method-simcity_runner-test_one}{\code{Runner$test_one()}}
@@ -193,6 +194,15 @@ Run the full simulation experiment.
 A data frame with the simulation results aggregated by design
   condition. The returned object has attributes `"label"` and `"time"`.
 }
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-simcity_runner-experiment_interactive"></a>}}
+\if{latex}{\out{\hypertarget{method-simcity_runner-experiment_interactive}{}}}
+\subsection{Method \code{experiment_interactive()}}{
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{Runner$experiment_interactive(interactive, Rep = 1, delay = 0, reset = TRUE)}\if{html}{\out{</div>}}
+}
+
 }
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-simcity_runner-one_cycle"></a>}}

@@ -311,7 +311,142 @@ Runner <- R6::R6Class(
 
       return(results)
     },
+    experiment_interactive = function(interactive,
+                                      Rep = 1,
+                                      delay = 0,
+                                      reset = TRUE) {
 
+      if (!requireNamespace("later", quietly = TRUE)) {
+        stop("Package 'later' is required for interactive simulations.")
+      }
+
+      if (isTRUE(reset)) {
+        interactive$reset()
+      }
+
+      .params <- private$.params[setdiff(names(private$.params), names(private$.design))]
+      .params <- c(.params, private$.design)
+
+      keep <- vapply(.params, function(z) {
+        is.numeric(z) || is.character(z) || is.logical(z)
+      }, logical(1))
+
+      params <- .params[keep]
+
+      if (length(params) == 0) {
+        stop("There are no parameters to run, please set them with obj$params or obj$design")
+      }
+
+      if (length(private$.steps) == 0) {
+        stop("There is no function to run, please set it with obj$steps")
+      }
+
+      egrid <- base::expand.grid(params, stringsAsFactors = FALSE)
+
+      ncond <- base::nrow(egrid)
+
+      cond_i <- 1L
+      rep_i <- 0L
+
+      last_cond_i <- NA_integer_
+
+      run_one_step <- function() {
+
+        tryCatch({
+
+          if (interactive$is_paused()) {
+            later::later(run_one_step, delay = delay)
+            return(invisible(NULL))
+          }
+
+          if (interactive$is_finished()) {
+            return(invisible(NULL))
+          }
+
+          if (cond_i > ncond) {
+            return(invisible(NULL))
+          }
+
+          rep_i <<- rep_i + 1L
+
+          one <- egrid[cond_i, , drop = FALSE]
+
+          if (!identical(cond_i, last_cond_i)) {
+            interactive$set_condition(one)
+            last_cond_i <<- cond_i
+          }
+
+          one_list <- base::as.list(one)
+
+          data <- private$.one_run(
+            c(private$.params, one_list)
+          )
+
+          if (!is.null(data) && NROW(data) > 0) {
+
+            if (base::is.data.frame(data)) {
+              data$.RepId <- rep_i
+              data$.CondId <- cond_i
+            } else {
+              attr(data, ".RepId") <- rep_i
+              attr(data, ".CondId") <- cond_i
+            }
+
+            interactive$update(data, append = TRUE)
+          }
+
+          if (rep_i >= Rep) {
+
+            if (!is.null(interactive$agg_plot_fun)) {
+              one_agg <- one
+              one_agg$.Rep <- Rep
+              agg_data <- private$.run_aggregates(interactive$x, one_agg)
+              interactive$update_agg(agg_data, append = TRUE)
+            }
+
+            cond_i <<- cond_i + 1L
+            rep_i <<- 0L
+
+            interactive$clear_data(reset_step = TRUE)
+          }
+
+          if (cond_i > ncond) {
+
+            interactive$running <- FALSE
+            interactive$paused <- FALSE
+            interactive$finished <- TRUE
+            interactive$dirty_plot <- TRUE
+            interactive$redraw_pending <- FALSE
+
+            interactive$invalidate_data()
+            interactive$invalidate_plot()
+
+            return(invisible(NULL))
+          }
+
+          later::later(run_one_step, delay = delay)
+
+          invisible(NULL)
+
+        }, error = function(e) {
+
+          interactive$info$error <- conditionMessage(e)
+
+          message("Error in experiment_interactive():")
+          message(conditionMessage(e))
+
+          interactive$pause()
+
+          invisible(NULL)
+        })
+      }
+
+      interactive$resume()
+
+      later::later(run_one_step, delay = 0)
+
+      invisible(interactive)
+    },
     #' @description
     #' Run one simulation condition.
     #'
@@ -383,7 +518,7 @@ Runner <- R6::R6Class(
       .names <- names(one)
 
       if (self$debug > 0) {
-        cat("Exec run for ", Rep, " times", paste(.names, print_params(one), sep = "=", collapse = ", "), "\n")
+        cat("Exec run for one time:", paste(.names, print_params(one), sep = "=", collapse = ", "), "\n")
       }
 
       data <- private$.one_run(one)
@@ -494,6 +629,7 @@ Runner <- R6::R6Class(
       results <- bind_list_cols(results, args)
       return(results)
     }
+
   ),
 
   active = list(

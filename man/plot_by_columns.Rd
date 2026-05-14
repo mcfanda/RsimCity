@@ -14,6 +14,7 @@ plot_by_columns(
   fixed = FALSE,
   xlabel = NULL,
   ylabel = NULL,
+  legeng = TRUE,
   legend_labels = NULL,
   title = NULL,
   line = TRUE,
