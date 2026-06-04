@@ -1,0 +1,6 @@
+name	user	system	elapsed
+Interactive	0.000	0.000	0.001	
+Runner	0.015	0.001	0.017	
+correlated_sample	0.002	0.000	0.001	
+plot_by_columns	0	0	0	
+plot_by_method	0	0	0	

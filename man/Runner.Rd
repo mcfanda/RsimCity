@@ -80,42 +80,42 @@ mon$run(viewer = "pane")
 
 }
 \section{Public fields}{
-\if{html}{\out{<div class="r6-fields">}}
-\describe{
-\item{\code{name}}{Character. Name of the simulation runner.}
+  \if{html}{\out{<div class="r6-fields">}}
+  \describe{
+    \item{\code{name}}{Character. Name of the simulation runner.}
 
-\item{\code{debug}}{Integer. Debugging level. Higher values print more information.}
+    \item{\code{debug}}{Integer. Debugging level. Higher values print more information.}
 
-\item{\code{info}}{List. Optional list for storing user-defined information.}
+    \item{\code{info}}{List. Optional list for storing user-defined information.}
 
-\item{\code{parallel}}{Logical. If `TRUE`, conditions are evaluated in parallel
+    \item{\code{parallel}}{Logical. If `TRUE`, conditions are evaluated in parallel
 using `future::multisession` (or `future::multicore` on Linux); otherwise
 they are evaluated sequentially. One process is spawned per design cell,
 so a single-cell design is not parallelised. To parallelise it, replicate
 the cell, e.g. `obj$design <- list(N = c(100, 100, 100))` with
 `obj$experiment(Rep = 400)`.}
 
-\item{\code{par_method}}{Character. Parallel backend when `parallel = TRUE`.
+    \item{\code{par_method}}{Character. Parallel backend when `parallel = TRUE`.
 `"multisession"` (default) works on Windows and Linux; `"multicore"`
 works on Linux only.}
 
-\item{\code{collect}}{List. Names of objects in `.GlobalEnv` to export to parallel
+    \item{\code{collect}}{List. Names of objects in `.GlobalEnv` to export to parallel
 workers. By default all functions in `.GlobalEnv` are exported; non-function
 objects (data frames, etc.) must be listed here explicitly. Ignored when
 `parallel = FALSE`.}
-}
-\if{html}{\out{</div>}}
+  }
+  \if{html}{\out{</div>}}
 }
 \section{Active bindings}{
-\if{html}{\out{<div class="r6-active-bindings">}}
-\describe{
-\item{\code{params}}{Named list. Fixed simulation parameters passed to simulation steps.}
+  \if{html}{\out{<div class="r6-active-bindings">}}
+  \describe{
+    \item{\code{params}}{Named list. Fixed simulation parameters passed to simulation steps.}
 
-\item{\code{design}}{Named list. Experimental design parameters. All combinations
+    \item{\code{design}}{Named list. Experimental design parameters. All combinations
 are expanded with [base::expand.grid()]. In case some parameter is already
 set in `obj$params`, the `obj$design` is used and the `obj$params` parameter is ignored.}
 
-\item{\code{step}}{Function or list of functions. Adds a simulation step, or
+    \item{\code{step}}{Function or list of functions. Adds a simulation step, or
 returns the currently defined steps when accessed without assignment.
 obj$step can be called repeatedly to add a sequence of functions to be run.
 Each function receives the argument `data` from the previous step
@@ -125,7 +125,7 @@ If the simcity Runner object is needed by the function, add `simcity=` argument 
 and then it can be accessed as `simcity$foo`, where `foo` is any method or variable
 exposed by the Runner.}
 
-\item{\code{aggregate}}{Function(s). Adds an aggregate function, or returns the
+    \item{\code{aggregate}}{Function(s). Adds an aggregate function, or returns the
 currently defined aggregate functions when accessed without assignment.
 Can be called repeatedly to chain multiple functions. Each function
 should accept a `data` argument; the last one must return a
@@ -135,108 +135,114 @@ data collected by `$step` functions. The default is
 `obj$aggregate <- FALSE`. The same pipeline is also run at the end of
 each condition during `$experiment_interactive()` to feed the
 aggregated-results plot in [Interactive].}
-}
-\if{html}{\out{</div>}}
+  }
+  \if{html}{\out{</div>}}
 }
 \section{Methods}{
 \subsection{Public methods}{
-\itemize{
-\item \href{#method-simcity_runner-new}{\code{Runner$new()}}
-\item \href{#method-simcity_runner-methods}{\code{Runner$methods()}}
-\item \href{#method-simcity_runner-print}{\code{Runner$print()}}
-\item \href{#method-simcity_runner-experiment}{\code{Runner$experiment()}}
-\item \href{#method-simcity_runner-experiment_interactive}{\code{Runner$experiment_interactive()}}
-\item \href{#method-simcity_runner-one_cycle}{\code{Runner$one_cycle()}}
-\item \href{#method-simcity_runner-test_cycle}{\code{Runner$test_cycle()}}
-\item \href{#method-simcity_runner-test_aggregates}{\code{Runner$test_aggregates()}}
-\item \href{#method-simcity_runner-test_one}{\code{Runner$test_one()}}
-\item \href{#method-simcity_runner-reset_steps}{\code{Runner$reset_steps()}}
-\item \href{#method-simcity_runner-clone}{\code{Runner$clone()}}
-}
+  \itemize{
+    \item \href{#method-simcity_runner-initialize}{\code{simcity_runner$new()}}
+    \item \href{#method-simcity_runner-methods}{\code{simcity_runner$methods()}}
+    \item \href{#method-simcity_runner-print}{\code{simcity_runner$print()}}
+    \item \href{#method-simcity_runner-experiment}{\code{simcity_runner$experiment()}}
+    \item \href{#method-simcity_runner-experiment_interactive}{\code{simcity_runner$experiment_interactive()}}
+    \item \href{#method-simcity_runner-one_cycle}{\code{simcity_runner$one_cycle()}}
+    \item \href{#method-simcity_runner-test_cycle}{\code{simcity_runner$test_cycle()}}
+    \item \href{#method-simcity_runner-test_aggregates}{\code{simcity_runner$test_aggregates()}}
+    \item \href{#method-simcity_runner-test_one}{\code{simcity_runner$test_one()}}
+    \item \href{#method-simcity_runner-reset_steps}{\code{simcity_runner$reset_steps()}}
+    \item \href{#method-simcity_runner-clone}{\code{simcity_runner$clone()}}
+  }
 }
 \if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-simcity_runner-new"></a>}}
-\if{latex}{\out{\hypertarget{method-simcity_runner-new}{}}}
-\subsection{Method \code{new()}}{
-Create a new simulation runner.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$new(name = "SimCityRunner")}\if{html}{\out{</div>}}
+\if{html}{\out{<a id="method-simcity_runner-initialize"></a>}}
+\if{latex}{\out{\hypertarget{method-simcity_runner-initialize}{}}}
+\subsection{\code{simcity_runner$new()}}{
+  Create a new simulation runner.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{simcity_runner$new(name = "SimCityRunner")}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{name}}{A label for this object}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A new `Runner` object.
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{name}}{A label for this object}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A new `Runner` object.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-simcity_runner-methods"></a>}}
 \if{latex}{\out{\hypertarget{method-simcity_runner-methods}{}}}
-\subsection{Method \code{methods()}}{
-Print registered private methods.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$methods()}\if{html}{\out{</div>}}
+\subsection{\code{simcity_runner$methods()}}{
+  Print registered private methods.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{simcity_runner$methods()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisibly returns `NULL`.
+  }
 }
 
-\subsection{Returns}{
-Invisibly returns `NULL`.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-simcity_runner-print"></a>}}
 \if{latex}{\out{\hypertarget{method-simcity_runner-print}{}}}
-\subsection{Method \code{print()}}{
-Print a short summary of the simulation runner.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$print(...)}\if{html}{\out{</div>}}
+\subsection{\code{simcity_runner$print()}}{
+  Print a short summary of the simulation runner.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{simcity_runner$print(...)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{...}}{Additional arguments, currently ignored.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisibly returns `self`.
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{...}}{Additional arguments, currently ignored.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Invisibly returns `self`.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-simcity_runner-experiment"></a>}}
 \if{latex}{\out{\hypertarget{method-simcity_runner-experiment}{}}}
-\subsection{Method \code{experiment()}}{
-Run the full simulation experiment.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$experiment(Rep = 1, label = NULL, progress = TRUE)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{Rep}}{Integer. Number of replications for each design condition.}
-
-\item{\code{label}}{Optional character label. Currently unused.}
-
-\item{\code{progress}}{Logical. If `TRUE`, show a progress bar.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A data frame with the simulation results aggregated by design
+\subsection{\code{simcity_runner$experiment()}}{
+  Run the full simulation experiment.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{simcity_runner$experiment(Rep = 1, label = NULL, progress = TRUE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{Rep}}{Integer. Number of replications for each design condition.}
+      \item{\code{label}}{Optional character label. Currently unused.}
+      \item{\code{progress}}{Logical. If `TRUE`, show a progress bar.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A data frame with the simulation results aggregated by design
   condition. The returned object has attributes `"label"` and `"time"`.
+  }
 }
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-simcity_runner-experiment_interactive"></a>}}
 \if{latex}{\out{\hypertarget{method-simcity_runner-experiment_interactive}{}}}
-\subsection{Method \code{experiment_interactive()}}{
-Run the simulation experiment with live Shiny updates.
+\subsection{\code{simcity_runner$experiment_interactive()}}{
+  Run the simulation experiment with live Shiny updates.
 
 Executes the same step and aggregate pipeline as `$experiment()`, but
 feeds results into an [Interactive] monitor as each replication completes
@@ -248,135 +254,150 @@ After all replications for a condition are done, the aggregate pipeline
 (`$aggregate`) is applied to the accumulated data and the result is pushed
 to `interactive$update_agg()`. If the [Interactive] object has an
 `agg_plot_fun` set, this triggers a redraw of the "Aggregated" tab.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$experiment_interactive(interactive, Rep = 1, delay = 0, reset = TRUE)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{interactive}}{An [Interactive] object. Receives live updates via
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{simcity_runner$experiment_interactive(
+  interactive,
+  Rep = 1,
+  delay = 0,
+  reset = TRUE
+)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{interactive}}{An [Interactive] object. Receives live updates via
 `$update()` and per-condition aggregated results via `$update_agg()`.}
-
-\item{\code{Rep}}{Integer. Number of replications per design condition.}
-
-\item{\code{delay}}{Numeric. Seconds to wait between replications. Increase for
+      \item{\code{Rep}}{Integer. Number of replications per design condition.}
+      \item{\code{delay}}{Numeric. Seconds to wait between replications. Increase for
 smoother animation; use `0` for maximum throughput.}
-
-\item{\code{reset}}{Logical. If `TRUE` (default), call `interactive$reset()`
+      \item{\code{reset}}{Logical. If `TRUE` (default), call `interactive$reset()`
 before starting so previous data is cleared.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    Invisibly returns the `interactive` object.
+  }
 }
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-Invisibly returns the `interactive` object.
-}
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-simcity_runner-one_cycle"></a>}}
 \if{latex}{\out{\hypertarget{method-simcity_runner-one_cycle}{}}}
-\subsection{Method \code{one_cycle()}}{
-Run one simulation condition.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$one_cycle(Rep = 10, design_params = NULL)}\if{html}{\out{</div>}}
-}
-
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{Rep}}{Integer. Number of replications.}
-
-\item{\code{design_params}}{Optional named list or one-row data frame containing
+\subsection{\code{simcity_runner$one_cycle()}}{
+  Run one simulation condition.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{simcity_runner$one_cycle(Rep = 10, design_params = NULL)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{Rep}}{Integer. Number of replications.}
+      \item{\code{design_params}}{Optional named list or one-row data frame containing
 design parameters for this condition.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A data frame with one row per successful replication. Failed
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A data frame with one row per successful replication. Failed
   replications are stored in attribute `"fail"`.
+  }
 }
-}
+
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-simcity_runner-test_cycle"></a>}}
 \if{latex}{\out{\hypertarget{method-simcity_runner-test_cycle}{}}}
-\subsection{Method \code{test_cycle()}}{
-Test a cycle of runs.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$test_cycle(Rep = 10)}\if{html}{\out{</div>}}
+\subsection{\code{simcity_runner$test_cycle()}}{
+  Test a cycle of runs.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{simcity_runner$test_cycle(Rep = 10)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{Rep}}{Integer. Number of replications used for the test the cycle.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A data frame returned by cycle function.
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{Rep}}{Integer. Number of replications used for the test the cycle.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A data frame returned by cycle function.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-simcity_runner-test_aggregates"></a>}}
 \if{latex}{\out{\hypertarget{method-simcity_runner-test_aggregates}{}}}
-\subsection{Method \code{test_aggregates()}}{
-Test aggregate functions.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$test_aggregates(Rep = 10)}\if{html}{\out{</div>}}
+\subsection{\code{simcity_runner$test_aggregates()}}{
+  Test aggregate functions.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{simcity_runner$test_aggregates(Rep = 10)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{Rep}}{Integer. Number of replications used for the test run.}
+    }
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    A data frame returned by the aggregate functions.
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{Rep}}{Integer. Number of replications used for the test run.}
-}
-\if{html}{\out{</div>}}
-}
-\subsection{Returns}{
-A data frame returned by the aggregate functions.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-simcity_runner-test_one"></a>}}
 \if{latex}{\out{\hypertarget{method-simcity_runner-test_one}{}}}
-\subsection{Method \code{test_one()}}{
-Run one single simulation.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$test_one()}\if{html}{\out{</div>}}
+\subsection{\code{simcity_runner$test_one()}}{
+  Run one single simulation.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{simcity_runner$test_one()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    The result of one full step sequence.
+  }
 }
 
-\subsection{Returns}{
-The result of one full step sequence.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-simcity_runner-reset_steps"></a>}}
 \if{latex}{\out{\hypertarget{method-simcity_runner-reset_steps}{}}}
-\subsection{Method \code{reset_steps()}}{
-Reset step functions.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$reset_steps()}\if{html}{\out{</div>}}
+\subsection{\code{simcity_runner$reset_steps()}}{
+  Reset step functions.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{simcity_runner$reset_steps()}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Returns}{
+    NULL.
+  }
 }
 
-\subsection{Returns}{
-NULL.
-}
-}
 \if{html}{\out{<hr>}}
 \if{html}{\out{<a id="method-simcity_runner-clone"></a>}}
 \if{latex}{\out{\hypertarget{method-simcity_runner-clone}{}}}
-\subsection{Method \code{clone()}}{
-The objects of this class are cloneable with this method.
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{Runner$clone(deep = FALSE)}\if{html}{\out{</div>}}
+\subsection{\code{simcity_runner$clone()}}{
+  The objects of this class are cloneable with this method.
+  \subsection{Usage}{
+    \if{html}{\out{<div class="r">}}
+    \preformatted{simcity_runner$clone(deep = FALSE)}
+    \if{html}{\out{</div>}}
+  }
+  \subsection{Arguments}{
+    \if{html}{\out{<div class="arguments">}}
+    \describe{
+      \item{\code{deep}}{Whether to make a deep clone.}
+    }
+    \if{html}{\out{</div>}}
+  }
 }
 
-\subsection{Arguments}{
-\if{html}{\out{<div class="arguments">}}
-\describe{
-\item{\code{deep}}{Whether to make a deep clone.}
-}
-\if{html}{\out{</div>}}
-}
-}
 }

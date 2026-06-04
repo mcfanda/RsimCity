@@ -201,9 +201,11 @@ Interactive <- R6::R6Class(
 
       private$data_count <- 0
       private$plot_count <- 0
+      private$agg_plot_count <- 0
 
-      private$data_trigger <- shiny::reactiveVal(0)
-      private$plot_trigger <- shiny::reactiveVal(0)
+      private$data_trigger     <- shiny::reactiveVal(0)
+      private$plot_trigger     <- shiny::reactiveVal(0)
+      private$agg_plot_trigger <- shiny::reactiveVal(0)
     },
 
     #' @description
@@ -350,6 +352,7 @@ Interactive <- R6::R6Class(
 
       self$invalidate_data()
       self$invalidate_plot()
+      self$invalidate_agg_plot()
 
       invisible(self)
     },
@@ -374,6 +377,7 @@ Interactive <- R6::R6Class(
 
       self$invalidate_data()
       self$invalidate_plot()
+      self$invalidate_agg_plot()
 
       invisible(self)
     },
@@ -427,6 +431,7 @@ Interactive <- R6::R6Class(
 
       self$invalidate_data()
       self$invalidate_plot()
+      self$invalidate_agg_plot()
 
       invisible(self)
     },
@@ -581,6 +586,25 @@ Interactive <- R6::R6Class(
     },
 
     #' @description
+    #' Invalidate Shiny outputs that depend on the aggregated plot.
+    #'
+    #' @return Invisibly returns `NULL`.
+    invalidate_agg_plot = function() {
+      private$agg_plot_count <- private$agg_plot_count + 1
+      private$agg_plot_trigger(private$agg_plot_count)
+      invisible(NULL)
+    },
+
+    #' @description
+    #' Create a dependency on the aggregated plot trigger.
+    #'
+    #' @return Invisibly returns `NULL`.
+    depend_agg_plot = function() {
+      private$agg_plot_trigger()
+      invisible(NULL)
+    },
+
+    #' @description
     #' Build the Shiny application.
     #'
     #' @return A Shiny application object.
@@ -653,22 +677,34 @@ Interactive <- R6::R6Class(
 
           obj$depend_plot()
 
-          tryCatch(
-            obj$plot_fun(obj$x, obj$step),
-            error = plot_error_display
-          )
+          if (is.null(obj$x)) {
+            ggplot2::ggplot() +
+                ggplot2::labs(title = "Waiting for cycle data") +
+                ggplot2::theme_minimal()
+
+          } else
+            tryCatch(
+              obj$plot_fun(obj$x, obj$step),
+              error = plot_error_display
+            )
         })
 
         if (has_agg) {
           output$agg_plot <- shiny::renderPlot({
 
-            obj$depend_plot()
+            obj$depend_agg_plot()
 
-            tryCatch(
-              obj$agg_plot_fun(obj$agg_x, obj$step),
-              error = plot_error_display
-            )
-          })
+            if (is.null(obj$agg_x)) {
+                ggplot2::ggplot() +
+                  ggplot2::labs(title = "Waiting for aggregate data") +
+                  ggplot2::theme_minimal()
+
+            } else
+              tryCatch(
+                obj$agg_plot_fun(obj$agg_x, obj$step),
+                error = plot_error_display
+              )
+            })
         }
 
         output$info <- shiny::renderPrint({
@@ -751,11 +787,13 @@ Interactive <- R6::R6Class(
 
   private = list(
 
-    data_trigger = NULL,
-    plot_trigger = NULL,
+    data_trigger     = NULL,
+    plot_trigger     = NULL,
+    agg_plot_trigger = NULL,
 
-    data_count = 0,
-    plot_count = 0,
+    data_count     = 0,
+    plot_count     = 0,
+    agg_plot_count = 0,
 
     append_data = function(old, new) {
 

@@ -1,0 +1,17 @@
+Package: Rsimcity
+Type: Package
+Title: R6 suite for simulations
+Version: 0.0.5
+Author: Marcello Gallucci [aut, cre]
+Authors@R: person("Marcello", "Gallucci", email = "mcfanda@gmail.com", role = c("aut", "cre"))
+Maintainer: Marcello Gallucci <mcfanda@gmail.com>
+Description: Provides generic function to setup and run simulations and experiments.
+    Beta version.
+Imports: R6
+Suggests: later, shiny, testthat (>= 3.0.0)
+Config/testthat/edition: 3
+License: GPL
+Encoding: UTF-8
+LazyData: true
+Config/roxygen2/version: 8.0.0
+Built: R 4.6.0; ; 2026-06-04 00:38:30 UTC; unix
