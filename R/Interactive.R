@@ -97,9 +97,7 @@
 #'   title        = "Live simulation monitor"
 #' )
 #'
-#' mon$set_start_fun(function(obj) {
-#'   runner$experiment_interactive(interactive = obj, Rep = 100, delay = 0.01)
-#' })
+#' mon$set_start_fun(function(obj) runner$experiment_interactive(interactive = obj, Rep = 100, delay = 0.01))
 #'
 #' mon$run(viewer = "pane")   # or "browser" / "dialog" / "none"
 #' }
