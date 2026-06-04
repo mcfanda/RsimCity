@@ -1,14 +1,16 @@
 #' Interactive simulation monitor
 #'
 #' @description
-#' `Interactive` is an R6 class used to display simulation results while they
-#' are being produced by a [Runner].
+#' Interactive provides a minimal Shiny-based monitor for visualising
+#' simulation output as it is produced. It is intended to be driven by a
+#' Runner object (see Rsimcity::Runner): the Runner calls $update() after each
+#' replication and $update_agg() after each condition completes. The monitor
+#' shows a live plot of the current-condition data and — when an aggregate
+#' plotting function is supplied — an accumulating aggregated-results plot.
 #'
-#' The class does not run simulations itself. Instead,
-#' [Runner]`$experiment_interactive()` drives the simulation and calls
-#' `$update()` after each replication and `$update_agg()` after each condition
-#' completes. Results are visualised in a Shiny app using one or two
-#' user-supplied plotting functions .
+#' The Interactive class does not run simulations itself; it only receives and
+#' displays results produced elsewhere. This separation keeps the monitor
+#' lightweight and suitable for embedding in RStudio or browser-based UIs.
 #'
 #' @details
 #' **Basic workflow** (live plot only):
