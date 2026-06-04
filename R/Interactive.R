@@ -21,9 +21,7 @@
 #'
 #' **Workflow with an aggregated-results plot:**
 #'
-#' ```r
 #' mon <- Interactive$new(plot_fun = my_plot, agg_plot_fun = my_agg_plot)
-#' ```
 #'
 #' When `agg_plot_fun` is supplied the Shiny app shows two tabs: **"Live"**
 #' displays the current-condition raw data updated every replication;
@@ -34,10 +32,8 @@
 #'
 #' Both plotting functions are called with two positional arguments:
 #'
-#' ```r
 #' plot_fun(data, step)      # `data` = current-condition accumulated output
 #' agg_plot_fun(agg_x, step) # `agg_x` = aggregated output, all conditions so far
-#' ```
 #'
 #' where `step` is the total number of per-replication updates received.
 #'
