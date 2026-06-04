@@ -1,0 +1,43 @@
+---
+title: "Introduction to Rsimcity"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to Rsimcity}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+This short vignette demonstrates a minimal, non-interactive use of the
+Rsimcity Runner to generate simple simulation results and aggregate them.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+library(Rsimcity)
+```
+
+## Minimal example
+
+Create a runner, define parameters and design, add a simulation step, then
+run the experiment with a small number of replications:
+
+```{r example}
+runner <- Rsimcity::Runner$new("example")
+runner$params <- list(N = 100)
+runner$design <- list(mu = c(0, 1, 2))
+
+runner$step <- function(N, mu) {
+  data.frame(x = stats::rnorm(N, mean = mu))
+}
+
+# Aggregate function: compute mean of x for the condition
+runner$aggregate <- function(data, mu) {
+  data.frame(mu = mu, mean_x = mean(data$x))
+}
+
+# Run the experiment (Rep = number of replications per condition)
+res <- runner$experiment(Rep = 10, progress = FALSE)
+
+head(res)
+```
+
+You can edit and extend this vignette to include Interactive usage or plots.

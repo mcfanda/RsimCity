@@ -147,6 +147,12 @@ plot_by_method <- function(data,
 #' @param line Logical. If `TRUE`, lines are drawn. Default is `TRUE`.
 #' @param points Logical. If `TRUE`, points are drawn. Default is `TRUE`.
 #'
+#' @param varsname Optional character vector of column names to plot (used if `pattern` is `NULL`).
+#' @param legeng Logical. Whether to show a legend (default `TRUE`).
+#' @param legend_labels Optional character vector of labels for the legend, same length as matched columns.
+#' @param colors Optional character vector of colors for the plotted lines/points.
+#' @param linetypes Optional character vector of linetypes for the matched columns.
+#'
 #' @details
 #' The function identifies all columns whose names match `pattern`, reshapes
 #' them internally to long format, aggregates the values by `xvar` and column
