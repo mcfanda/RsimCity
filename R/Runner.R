@@ -487,8 +487,11 @@ Runner <- R6::R6Class(
 
           interactive$info$error <- conditionMessage(e)
 
-          message("Error in experiment_interactive():")
-          message(conditionMessage(e))
+          # Only print the error messages to the console when debug is enabled
+          if (is.numeric(self$debug) && self$debug > 0) {
+            message("Error in experiment_interactive():")
+            message(conditionMessage(e))
+          }
 
           interactive$pause()
 
