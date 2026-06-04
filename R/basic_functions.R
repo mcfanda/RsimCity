@@ -88,6 +88,8 @@ bind_list_cols <- function(df, x) {
 #'
 #' @description
 #' Count the frequency of elements of a vector in another vector
+#' @param V Character vector of values to count
+#' @param X Vector in which to count occurrences of `V`
 #' @export
 count_names <- function(V, X) {
   out <- tabulate(match(X, V), nbins = length(V))

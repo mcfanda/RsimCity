@@ -13,15 +13,11 @@
 #' @details
 #' **Basic workflow** (live plot only):
 #'
-#' ```r
 #' mon <- Interactive$new(plot_fun = my_plot)
 #'
-#' mon$set_start_fun(function(obj) {
-#'   runner$experiment_interactive(interactive = obj, Rep = 100)
-#' })
+#' mon$set_start_fun(function(obj) runner$experiment_interactive(interactive = obj, Rep = 100))
 #'
 #' mon$run(viewer = "pane")
-#' ```
 #'
 #' **Workflow with an aggregated-results plot:**
 #'
