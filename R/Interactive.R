@@ -70,38 +70,14 @@
 #'
 #' @examples
 #' \dontrun{
-#' # Live plot: histogram of current-condition estimates
-#' plot_fun <- function(data, step) {
-#'   if (is.null(data) || !is.data.frame(data)) {
-#'     return(ggplot2::ggplot() + ggplot2::labs(title = "Waiting for data"))
-#'   }
-#'   ggplot2::ggplot(data, ggplot2::aes(x = estimate)) +
-#'     ggplot2::geom_histogram(bins = 40) +
-#'     ggplot2::labs(title = paste("Step:", step)) +
-#'     ggplot2::theme_minimal()
-#' }
+#' # Minimal example — Runner drives the simulation and Interactive displays it
+#' runner <- Rsimcity::Runner$new("example")
+#' runner$params <- list(N = 10)
+#' runner$design <- list(mu = c(0, 1))
+#' runner$step <- function(N, mu) data.frame(x = stats::rnorm(N, mean = mu))
 #'
-#' # Aggregated plot: mean estimate per completed condition
-#' # (requires runner$aggregate to return a data frame with `mean_estimate`)
-#' agg_plot_fun <- function(data, step) {
-#'   if (is.null(data) || !is.data.frame(data)) {
-#'     return(ggplot2::ggplot() + ggplot2::labs(title = "Waiting for aggregated data"))
-#'   }
-#'   ggplot2::ggplot(data, ggplot2::aes(x = condition, y = mean_estimate)) +
-#'     ggplot2::geom_col() +
-#'     ggplot2::labs(title = paste("Aggregated — conditions done:", nrow(data))) +
-#'     ggplot2::theme_minimal()
-#' }
-#'
-#' mon <- Interactive$new(
-#'   plot_fun     = plot_fun,
-#'   agg_plot_fun = agg_plot_fun,
-#'   title        = "Live simulation monitor"
-#' )
-#'
-#' mon$set_start_fun(function(obj) runner$experiment_interactive(interactive = obj, Rep = 100, delay = 0.01))
-#'
-#' mon$run(viewer = "pane")   # or "browser" / "dialog" / "none"
+#' mon <- Rsimcity::Interactive$new(plot_fun = function(data, step) NULL)
+#' runner$experiment_interactive(interactive = mon, Rep = 5, delay = 0)
 #' }
 #'
 #' @export
