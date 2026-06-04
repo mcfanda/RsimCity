@@ -7,8 +7,9 @@ Authors@R: person("Marcello", "Gallucci", email = "mcfanda@gmail.com", role = c(
 Maintainer: Marcello Gallucci <mcfanda@gmail.com>
 Description: Provides generic function to setup and run simulations and experiments.
     Beta version.
-Imports: R6, ggplot2
+Imports: ggplot2
 Suggests:
+    R6,
     later,
     shiny,
     testthat (>= 3.0.0)
