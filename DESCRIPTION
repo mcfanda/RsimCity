@@ -1,7 +1,7 @@
 Package: Rsimcity
 Type: Package
 Title: R6 Suite for Simulations
-Version: 0.0.6
+Version: 0.1.0
 Author: Marcello Gallucci [aut, cre]
 Authors@R: person("Marcello", "Gallucci", email = "mcfanda@gmail.com",
         role = c("aut", "cre"))
