@@ -3,7 +3,6 @@
 ^\\.Rhistory$
 ^\\.Rcheck$
 ^\\.gitignore$
-^\\.positai$
 ^local$
 ^\\.RData$
 ^.*\.Rproj$
