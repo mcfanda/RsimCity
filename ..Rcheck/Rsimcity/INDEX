@@ -1,7 +1,0 @@
-Interactive             Interactive simulation monitor
-Runner                  Simulation runner
-correlated_sample       Generate a correlated sample
-count_names             Count elements
-plot_by_columns         Plot columns matching a name pattern against an
-                        x variable
-plot_by_method          Plot aggregated simulation results by method
