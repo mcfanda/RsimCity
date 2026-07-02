@@ -11,7 +11,7 @@ This short vignette demonstrates a minimal, non-interactive use of the
 Rsimcity Runner to generate simple simulation results and aggregate them.
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval = FALSE)
+knitr::opts_chunk$set(eval = TRUE)
 library(Rsimcity)
 ```
 

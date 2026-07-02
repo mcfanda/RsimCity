@@ -12,3 +12,7 @@
 ..Rcheck
 .Rhistory
 .positai
+^\.claude$
+^\.copilot_session$
+^Rsimcity\.Rcheck$
+^Rsimcity_.*\.tar\.gz$

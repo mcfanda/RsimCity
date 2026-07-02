@@ -175,7 +175,7 @@ Runner <- R6::R6Class(
         else
               future::plan(future::multisession)
 
-      } else if (requireNamespace("future", quietly = TRUE)) {
+      } else {
         future::plan(future::sequential)
       }
 
