@@ -2,7 +2,6 @@
 .Rhistory
 .RData
 .Ruserdata
-.positai
 local/
-..Rcheck
+.Rcheck*
 local

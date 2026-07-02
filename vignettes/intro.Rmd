@@ -40,4 +40,3 @@ res <- runner$experiment(Rep = 10, progress = FALSE)
 head(res)
 ```
 
-You can edit and extend this vignette to include Interactive usage or plots.
