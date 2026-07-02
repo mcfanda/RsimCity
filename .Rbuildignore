@@ -3,16 +3,9 @@
 ^\\.Rhistory$
 ^\\.Rcheck$
 ^\\.gitignore$
-^\\.positai$
 ^local$
 ^\\.RData$
 ^.*\.Rproj$
 ^\.Rproj\.user$
-^\.positai$
 ..Rcheck
 .Rhistory
-.positai
-^\.claude$
-^\.copilot_session$
-^Rsimcity\.Rcheck$
-^Rsimcity_.*\.tar\.gz$
