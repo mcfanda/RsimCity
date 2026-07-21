@@ -19,3 +19,14 @@ testthat::test_that("correlated_sample returns correct dimensions and statistics
   # Check correlation approximately matches the target
   testthat::expect_equal(cor(dat$x1, dat$x2), 0.5, tolerance = 0.1)
 })
+
+data<-Rsimcity::simulate_sample_from_eta(.1, 100000,
+                                         model = "logistic",
+                                         k = 3, rho = 0.30)
+
+mod<-glm(y~x1+x2+x3,data = data,family = binomial())
+res<-gzlmpower::eta2(mod)
+
+testthat::test_that("gzlm correlated_sample returns a sensible value", {
+  testthat::expect_equal(res[1,1], .1, tolerance = 0.1)
+})
