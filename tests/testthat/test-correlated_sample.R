@@ -1,9 +1,9 @@
-testthat::test_that("correlated_sample returns correct dimensions and statistics", {
+testthat::test_that("simulate_sample_from_corr returns correct dimensions and statistics", {
   R <- matrix(c(1, 0.5,
                 0.5, 1), nrow = 2, byrow = TRUE)
   N <- 1000
 
-  dat <- Rsimcity::correlated_sample(N = N, R = R, mu = c(0, 2), sd = c(1, 3), seed = 123)
+  dat <- Rsimcity::simulate_sample_from_corr(N = N, R = R, mu = c(0, 2), sd = c(1, 3), seed = 123)
 
   testthat::expect_equal(nrow(dat), N)
   testthat::expect_equal(ncol(dat), 2)
