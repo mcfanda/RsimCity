@@ -190,43 +190,27 @@ simulate_sample_from_eta <- function(target_eta2, N,
     }
   }
 
+  cal <- .get_eta_calibration(target_eta2, model, k, rho, n_nodes, p_target, n_levels)
+
   Sigma <- matrix(rho, k, k); diag(Sigma) <- 1
   U     <- chol(Sigma)
   X     <- matrix(stats::rnorm(N * k), N, k) %*% U
 
   if (model == "gaussian") {
-    cal <- .glm_calibrate_gaussian(target_eta2, k, rho)
     Y <- cal$b1 * X[, 1] + stats::rnorm(N, sd = cal$sigma)
 
   } else if (model %in% c("logistic", "probit")) {
-    grid <- .glm_build_grid(k, n_nodes, Sigma)
     fam <- switch(model, logistic = stats::binomial(), probit = stats::binomial(link = "probit"))
-    t_star <- .glm_calibrate_t(target_eta2, grid, fam)
-    Y <- stats::rbinom(N, 1, fam$linkinv(X[, 1] * t_star))
+    Y <- stats::rbinom(N, 1, fam$linkinv(X[, 1] * cal$t_star))
 
   } else if (model == "multinomial") {
-    grid <- .glm_build_grid(k, n_nodes, Sigma)
-    t_star <- stats::uniroot(function(t) .glm_eta2_multinom(t, grid, p_target) - target_eta2,
-                              c(1e-4, 10), tol = 1e-6)$root
-    alpha <- .glm_solve_intercepts(t_star, grid, p_target)
-    eta <- matrix(t_star * X[, 1], nrow = N, ncol = n_levels - 1)
-    eta <- sweep(eta, 2, alpha, FUN = "+")
+    eta <- matrix(cal$t_star * X[, 1], nrow = N, ncol = n_levels - 1)
+    eta <- sweep(eta, 2, cal$alpha, FUN = "+")
     P <- .glm_multinom_probs(eta)
     Y <- apply(P, 1, function(p) sample.int(n_levels, 1, prob = p))
 
   } else { # ordinal
-    grid <- .glm_build_grid(k, n_nodes, Sigma)
-    cum_target <- cumsum(p_target)[seq_len(n_levels - 1)]
-    t_star <- stats::uniroot(function(t) .glm_eta2_ordinal(t, grid, cum_target) - target_eta2,
-                              c(1e-4, 10), tol = 1e-6)$root
-    thresholds <- vapply(
-      cum_target,
-      .glm_solve_threshold,
-      numeric(1),
-      eta = t_star * grid$X[, 1],
-      w = grid$w
-    )
-    P <- .glm_ordinal_probs(t_star * X[, 1], thresholds)
+    P <- .glm_ordinal_probs(cal$t_star * X[, 1], cal$thresholds)
     Y <- apply(P, 1, function(p) sample.int(n_levels, 1, prob = p))
   }
 
@@ -317,43 +301,27 @@ simulate_sample_from_r2 <- function(target_r2, N,
     }
   }
 
+  cal <- .get_r2_calibration(target_r2, model, n_nodes, p_target, n_levels)
+
   Sigma <- matrix(rho, k, k); diag(Sigma) <- 1
   U     <- chol(Sigma)
   X     <- matrix(stats::rnorm(N * k), N, k) %*% U
 
   if (model == "gaussian") {
-    cal <- .glm_calibrate_gaussian_r2(target_r2)
     Y <- cal$b1 * X[, 1] + stats::rnorm(N, sd = cal$sigma)
 
   } else if (model %in% c("logistic", "probit")) {
-    grid1d <- .glm_build_grid_1d(n_nodes)
     fam <- switch(model, logistic = stats::binomial(), probit = stats::binomial(link = "probit"))
-    t_star <- .glm_calibrate_r2_t(target_r2, grid1d, fam)
-    Y <- stats::rbinom(N, 1, fam$linkinv(X[, 1] * t_star))
+    Y <- stats::rbinom(N, 1, fam$linkinv(X[, 1] * cal$t_star))
 
   } else if (model == "multinomial") {
-    grid1d <- .glm_build_grid_1d(n_nodes)
-    t_star <- stats::uniroot(function(t) .glm_R2_multinom_of_t(t, grid1d, p_target) - target_r2,
-                              c(1e-4, 10), tol = 1e-6)$root
-    alpha <- .glm_solve_intercepts(t_star, grid1d, p_target)
-    eta <- matrix(t_star * X[, 1], nrow = N, ncol = n_levels - 1)
-    eta <- sweep(eta, 2, alpha, FUN = "+")
+    eta <- matrix(cal$t_star * X[, 1], nrow = N, ncol = n_levels - 1)
+    eta <- sweep(eta, 2, cal$alpha, FUN = "+")
     P <- .glm_multinom_probs(eta)
     Y <- apply(P, 1, function(p) sample.int(n_levels, 1, prob = p))
 
   } else { # ordinal
-    grid1d <- .glm_build_grid_1d(n_nodes)
-    cum_target <- cumsum(p_target)[seq_len(n_levels - 1)]
-    t_star <- stats::uniroot(function(t) .glm_R2_ordinal_of_t(t, grid1d, cum_target) - target_r2,
-                              c(1e-4, 10), tol = 1e-6)$root
-    thresholds <- vapply(
-      cum_target,
-      .glm_solve_threshold,
-      numeric(1),
-      eta = t_star * grid1d$X[, 1],
-      w = grid1d$w
-    )
-    P <- .glm_ordinal_probs(t_star * X[, 1], thresholds)
+    P <- .glm_ordinal_probs(cal$t_star * X[, 1], cal$thresholds)
     Y <- apply(P, 1, function(p) sample.int(n_levels, 1, prob = p))
   }
 
@@ -362,6 +330,123 @@ simulate_sample_from_r2 <- function(target_r2, N,
 }
 
 ### end of exported function; internal calibration machinery below ###
+
+# The calibration step of simulate_sample_from_eta() (building the quadrature grid,
+# root-finding t_star, and -- for multinomial/ordinal -- fitting the reduced model on the
+# grid) depends only on (target_eta2, model, k, rho, n_nodes, p_target, n_levels), never on
+# N or the replication index. It is also completely free of randomness (uniroot/optim on a
+# fixed grid), so caching it changes nothing about reproducibility: `seed` still only
+# governs the sampling step below, exactly as before. This cache exists because the same
+# small set of (eta2, model) combinations is typically recalibrated on every one of many
+# replications in a simulation loop, at a cost that is not negligible for the categorical
+# models (grid size grows as n_nodes^k, and multinomial/ordinal additionally re-fit a
+# reduced model on that grid during root-finding).
+.eta_calibration_cache <- new.env(parent = emptyenv())
+
+.eta_calibration_key <- function(target_eta2, model, k, rho, n_nodes, p_target, n_levels) {
+  paste(
+    sprintf("%.15g", target_eta2), model, k, sprintf("%.15g", rho), n_nodes,
+    paste(sprintf("%.15g", p_target), collapse = ","), n_levels,
+    sep = "|"
+  )
+}
+
+.get_eta_calibration <- function(target_eta2, model, k, rho, n_nodes, p_target, n_levels) {
+  key <- .eta_calibration_key(target_eta2, model, k, rho, n_nodes, p_target, n_levels)
+  if (exists(key, envir = .eta_calibration_cache, inherits = FALSE)) {
+    return(get(key, envir = .eta_calibration_cache, inherits = FALSE))
+  }
+  cal <- .compute_eta_calibration(target_eta2, model, k, rho, n_nodes, p_target, n_levels)
+  assign(key, cal, envir = .eta_calibration_cache)
+  cal
+}
+
+# Computes the calibration object for a given model: `t_star` (the coefficient on the
+# first predictor) plus whatever model-specific extras the sampling step needs (`alpha`
+# intercepts for multinomial, `thresholds` for ordinal), or `b1`/`sigma` for the
+# closed-form gaussian case.
+.compute_eta_calibration <- function(target_eta2, model, k, rho, n_nodes, p_target, n_levels) {
+  if (model == "gaussian") {
+    cal <- .glm_calibrate_gaussian(target_eta2, k, rho)
+    return(list(b1 = cal$b1, sigma = cal$sigma))
+  }
+
+  Sigma <- matrix(rho, k, k); diag(Sigma) <- 1
+  grid  <- .glm_build_grid(k, n_nodes, Sigma)
+
+  if (model %in% c("logistic", "probit")) {
+    fam <- switch(model, logistic = stats::binomial(), probit = stats::binomial(link = "probit"))
+    list(t_star = .glm_calibrate_t(target_eta2, grid, fam))
+
+  } else if (model == "multinomial") {
+    t_star <- stats::uniroot(function(t) .glm_eta2_multinom(t, grid, p_target) - target_eta2,
+                              c(1e-4, 10), tol = 1e-6)$root
+    list(t_star = t_star, alpha = .glm_solve_intercepts(t_star, grid, p_target))
+
+  } else { # ordinal
+    cum_target <- cumsum(p_target)[seq_len(n_levels - 1)]
+    t_star <- stats::uniroot(function(t) .glm_eta2_ordinal(t, grid, cum_target) - target_eta2,
+                              c(1e-4, 10), tol = 1e-6)$root
+    thresholds <- vapply(
+      cum_target, .glm_solve_threshold, numeric(1),
+      eta = t_star * grid$X[, 1], w = grid$w
+    )
+    list(t_star = t_star, thresholds = thresholds)
+  }
+}
+
+# The same caching idea applied to simulate_sample_from_r2()'s calibration. Unlike the
+# eta2 case, this calibration doesn't depend on k or rho at all (the full model's
+# population fit reduces to a function of the first predictor's own marginal
+# distribution), so the cache key is correspondingly simpler.
+.r2_calibration_cache <- new.env(parent = emptyenv())
+
+.r2_calibration_key <- function(target_r2, model, n_nodes, p_target, n_levels) {
+  paste(
+    sprintf("%.15g", target_r2), model, n_nodes,
+    paste(sprintf("%.15g", p_target), collapse = ","), n_levels,
+    sep = "|"
+  )
+}
+
+.get_r2_calibration <- function(target_r2, model, n_nodes, p_target, n_levels) {
+  key <- .r2_calibration_key(target_r2, model, n_nodes, p_target, n_levels)
+  if (exists(key, envir = .r2_calibration_cache, inherits = FALSE)) {
+    return(get(key, envir = .r2_calibration_cache, inherits = FALSE))
+  }
+  cal <- .compute_r2_calibration(target_r2, model, n_nodes, p_target, n_levels)
+  assign(key, cal, envir = .r2_calibration_cache)
+  cal
+}
+
+.compute_r2_calibration <- function(target_r2, model, n_nodes, p_target, n_levels) {
+  if (model == "gaussian") {
+    cal <- .glm_calibrate_gaussian_r2(target_r2)
+    return(list(b1 = cal$b1, sigma = cal$sigma))
+  }
+
+  grid1d <- .glm_build_grid_1d(n_nodes)
+
+  if (model %in% c("logistic", "probit")) {
+    fam <- switch(model, logistic = stats::binomial(), probit = stats::binomial(link = "probit"))
+    list(t_star = .glm_calibrate_r2_t(target_r2, grid1d, fam))
+
+  } else if (model == "multinomial") {
+    t_star <- stats::uniroot(function(t) .glm_R2_multinom_of_t(t, grid1d, p_target) - target_r2,
+                              c(1e-4, 10), tol = 1e-6)$root
+    list(t_star = t_star, alpha = .glm_solve_intercepts(t_star, grid1d, p_target))
+
+  } else { # ordinal
+    cum_target <- cumsum(p_target)[seq_len(n_levels - 1)]
+    t_star <- stats::uniroot(function(t) .glm_R2_ordinal_of_t(t, grid1d, cum_target) - target_r2,
+                              c(1e-4, 10), tol = 1e-6)$root
+    thresholds <- vapply(
+      cum_target, .glm_solve_threshold, numeric(1),
+      eta = t_star * grid1d$X[, 1], w = grid1d$w
+    )
+    list(t_star = t_star, thresholds = thresholds)
+  }
+}
 
 # Gauss-Hermite nodes and weights for computing E[f(Z)] for a standard normal Z.
 # Returns a list with `nodes` (the z_i) and `weights` (the w_i, summing to 1), so that
