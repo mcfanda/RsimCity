@@ -7,13 +7,12 @@
 simulate_sample_from_eta(
   target_eta2,
   N,
-  model = c("logistic", "probit", "multinomial", "ordinal", "gaussian"),
+  model = c("logistic", "probit", "multinomial", "ordinal"),
   k = 3,
-  rho = 0,
+  rho = 0.3,
   n_nodes = 20,
-  p_target = NULL,
-  seed = NULL,
-  n_levels = 3
+  p_target = c(1/3, 1/3, 1/3),
+  seed = NULL
 )
 }
 \arguments{
@@ -23,7 +22,7 @@ predictor, strictly between 0 and 1.}
 \item{N}{Integer. Number of cases to draw.}
 
 \item{model}{Character. One of `"logistic"`, `"probit"`, `"multinomial"`,
-`"ordinal"`, or `"gaussian"`.}
+or `"ordinal"`.}
 
 \item{k}{Integer. Number of correlated predictors to generate; only the
 first one carries an effect on the outcome. Default is `3`.}
@@ -32,85 +31,59 @@ first one carries an effect on the outcome. Default is `3`.}
 Default is `0.30`.}
 
 \item{n_nodes}{Integer. Number of Gauss-Hermite quadrature nodes per
-dimension used to compute the exact population values. Ignored for
-`"gaussian"`, which uses a closed-form calibration instead. Default is
-`20`.}
+dimension used to compute the exact population values. Default is `20`.}
 
-\item{p_target}{Optional numeric vector. For `"multinomial"` and
-`"ordinal"` models, the target marginal distribution of the outcome.
-Its length must equal `n_levels` and its positive elements must sum to one.
-When `NULL`, all levels are equally likely. If `n_levels` is omitted and
-`p_target` is supplied, the number of levels is inferred from its length.}
+\item{p_target}{Numeric vector of length 3. For `"multinomial"` and
+`"ordinal"` models, the target marginal distribution of the outcome
+across its three categories. Default is equal thirds. Ignored for
+`"logistic"` and `"probit"`.}
 
 \item{seed}{Optional integer. Random seed used for reproducible sampling.
 Default is `NULL`.}
-
-\item{n_levels}{Integer. Number of outcome levels for `"multinomial"` and
-`"ordinal"` models. Must be at least 2. Default is `3`. Ignored for the
-other models.}
 }
 \value{
 A data frame with `N` rows and columns `x1`, ..., `xk` (the
   predictors) and `y` (the outcome). `y` is coded `0`/`1` for `"logistic"`
-  and `"probit"`, integers from `1` through `n_levels` for `"multinomial"`
-  and `"ordinal"`, and is continuous for `"gaussian"`.
+  and `"probit"`, and `1`/`2`/`3` for `"multinomial"` and `"ordinal"`.
 }
 \description{
 Draws a sample of `N` cases from a population of `k` correlated normal
 predictors in which the first predictor has an exactly known population
-eta-squared, for a logistic, probit, multinomial, ordinal (proportional
-odds), or gaussian (classical linear) model.
+eta-squared, for a logistic, probit, multinomial, or ordinal (proportional
+odds) model.
 
 Unlike simulating a very large population and searching for coefficients
 that approximately match a target effect size, the target population
-eta-squared here is computed exactly -- via closed-form covariance algebra
-for the gaussian model, and via Gauss-Hermite quadrature for the others --
-and the model coefficient that produces it is found analytically or by
-root-finding, before any random sample is drawn.
+eta-squared here is computed exactly via Gauss-Hermite quadrature, and the
+model coefficient that produces it is found by root-finding, before any
+random sample is drawn.
 }
 \details{
 Because every model considered here reaches the outcome only through one
 or two linear predictors, and the predictors are assumed jointly normal,
 the population quantities needed to compute eta-squared (average predicted
 probability, average model entropy) reduce to low-dimensional integrals
-against normal densities, regardless of `k`. For `"logistic"`, `"probit"`,
-`"multinomial"`, and `"ordinal"` these are evaluated by Gauss-Hermite
-quadrature. For `"gaussian"`, the same quantities have an exact closed
-form in terms of the predictor covariance matrix, requiring no numerical
-integration at all; this model is included mainly as a classical-GLM
-benchmark against which the quadrature-based models can be compared.
+against normal densities, regardless of `k`. These are evaluated by
+Gauss-Hermite quadrature.
 
-One subtlety is handled explicitly for every model: even though only the
-first predictor has a true effect, the remaining `k - 1` predictors are
-correlated with it, so the model that omits the first predictor does not
-have a population-optimal coefficient of zero on them -- it partly
-recovers the omitted predictor's effect through the correlation. For
-`"logistic"`, `"probit"`, `"multinomial"`, and `"ordinal"`, the calibration
-fits this reduced model's actual population-optimal coefficients (by
-minimizing its expected deviance over the assumed predictor distribution)
-rather than assuming they coincide with the null model. For `"gaussian"`,
-the same correction is available in closed form, via the population
-regression of the first predictor on the others.
+One subtlety is handled explicitly: even though only the first predictor
+has a true effect, the remaining `k - 1` predictors are correlated with it,
+so the model that omits the first predictor does not have a
+population-optimal coefficient of zero on them -- it partly recovers the
+omitted predictor's effect through the correlation. The calibration
+therefore fits this reduced model's actual population-optimal coefficients
+(by minimizing its expected deviance over the assumed predictor
+distribution) rather than assuming they coincide with the null model.
 }
 \examples{
 # a sample of 200 cases from a logistic model in which the first predictor
 # accounts for 10\% of the population variance (eta-squared = .10)
-dat <- simulate_sample_from_eta(target_eta2 = 0.10, N = 200, model = "logistic")
+dat <- glm_simulate_sample(target_eta2 = 0.10, N = 200, model = "logistic")
 head(dat)
 
 # the same population effect size, for an ordinal (proportional-odds)
 # outcome with three equally likely categories
-dat_ord <- simulate_sample_from_eta(target_eta2 = 0.10, N = 200, model = "ordinal")
+dat_ord <- glm_simulate_sample(target_eta2 = 0.10, N = 200, model = "ordinal")
 head(dat_ord)
-
-# a four-level multinomial outcome
-dat_multi4 <- simulate_sample_from_eta(
-  target_eta2 = 0.10, N = 200, model = "multinomial", n_levels = 4
-)
-table(dat_multi4$y)
-
-# the classical linear model benchmark
-dat_gauss <- simulate_sample_from_eta(target_eta2 = 0.10, N = 200, model = "gaussian")
-head(dat_gauss)
 
 }
