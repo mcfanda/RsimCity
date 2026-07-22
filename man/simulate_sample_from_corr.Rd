@@ -4,13 +4,13 @@
 \alias{simulate_sample_from_corr}
 \title{Generate a correlated sample}
 \usage{
-simulate_sample_from_corr(N, R, mu = 0, sd = 1, seed = NULL)
+simulate_sample_from_corr(R, N, mu = 0, sd = 1, seed = NULL)
 }
 \arguments{
-\item{N}{Integer. Number of observations to generate.}
-
 \item{R}{Numeric matrix. A positive definite correlation matrix. The number of
 rows and columns defines the number of generated variables.}
+
+\item{N}{Integer. Number of observations to generate.'}
 
 \item{mu}{Numeric vector. Means of the generated variables. If a single value
 is supplied, it is recycled across variables. Default is `0`.}
@@ -45,7 +45,7 @@ R <- matrix(
   byrow = TRUE
 )
 
-dat <- simulate_sample_from_corr(N = 100, R = R, mu = c(0, 2), sd = c(1, 3))
+dat <- simulate_sample_from_corr( R = R,N = 100, mu = c(0, 2), sd = c(1, 3))
 head(dat)
 cor(dat)
 

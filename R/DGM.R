@@ -5,9 +5,9 @@
 #' distribution with a specified correlation matrix, means, and standard
 #' deviations.
 #'
-#' @param N Integer. Number of observations to generate.
 #' @param R Numeric matrix. A positive definite correlation matrix. The number of
 #'   rows and columns defines the number of generated variables.
+#' @param N Integer. Number of observations to generate.'
 #' @param mu Numeric vector. Means of the generated variables. If a single value
 #'   is supplied, it is recycled across variables. Default is `0`.
 #' @param sd Numeric vector. Standard deviations of the generated variables. If a
@@ -33,13 +33,13 @@
 #'   byrow = TRUE
 #' )
 #'
-#' dat <- simulate_sample_from_corr(N = 100, R = R, mu = c(0, 2), sd = c(1, 3))
+#' dat <- simulate_sample_from_corr( R = R,N = 100, mu = c(0, 2), sd = c(1, 3))
 #' head(dat)
 #' cor(dat)
 #'
 #' @importFrom stats rnorm
 #' @export
-simulate_sample_from_corr <- function(N, R, mu = 0, sd = 1, seed = NULL) {
+simulate_sample_from_corr <- function(R, N, mu = 0, sd = 1, seed = NULL) {
 
   if (!is.null(seed)) set.seed(seed)
   K <- nrow(R)
@@ -160,7 +160,7 @@ simulate_sample_from_corr <- function(N, R, mu = 0, sd = 1, seed = NULL) {
 #' @export
 simulate_sample_from_eta <- function(target_eta2, N,
                                  model = c("logistic", "probit", "multinomial", "ordinal", "gaussian"),
-                                 k = 3, rho = 0.30, n_nodes = 20,
+                                 k = 3, rho = 0, n_nodes = 20,
                                  p_target = NULL,
                                  seed = NULL,
                                  n_levels = 3) {
@@ -287,7 +287,7 @@ simulate_sample_from_eta <- function(target_eta2, N,
 #' @export
 simulate_sample_from_r2 <- function(target_r2, N,
                                 model = c("logistic", "probit", "multinomial", "ordinal", "gaussian"),
-                                k = 3, rho = 0.30, n_nodes = 20,
+                                k = 3, rho = 0, n_nodes = 20,
                                 p_target = NULL,
                                 seed = NULL,
                                 n_levels = 3) {

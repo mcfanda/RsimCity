@@ -9,7 +9,7 @@ simulate_sample_from_eta(
   N,
   model = c("logistic", "probit", "multinomial", "ordinal", "gaussian"),
   k = 3,
-  rho = 0.3,
+  rho = 0,
   n_nodes = 20,
   p_target = NULL,
   seed = NULL,
