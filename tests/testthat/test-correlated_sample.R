@@ -34,16 +34,19 @@ focal_beta <- function(model, k, yl = 3) {
 }
 equicorr <- function(k, rho) { S <- matrix(rho, k, k); diag(S) <- 1; S }
 
-data<-Rsimcity::sample_by_eta2(n = 100000, eta2 = .1,
-                                model = "logistic",
-                                k = 3, beta = focal_beta("logistic", 3),
-                                x_cov = equicorr(3, 0.30))
+testthat::test_that("sample_by_eta2 returns the requested calibrated eta-squared", {
+  dat <- Rsimcity::sample_by_eta2(
+    n = 100,
+    eta2 = 0.1,
+    model = "logistic",
+    k = 3,
+    beta = focal_beta("logistic", 3),
+    x_cov = equicorr(3, 0.30),
+    order = 5,
+    seed = 123
+  )
 
-mod<-glm(y~x1+x2+x3,data = data,family = binomial())
-res<-gzlmpower::eta2(mod)
-
-testthat::test_that("gzlm sample_by_eta2 returns a sensible value", {
-  testthat::expect_equal(res[1,1], .1, tolerance = 0.1)
+  testthat::expect_equal(attr(dat, "quadrature_eta2"), 0.1, tolerance = 1e-5)
 })
 
 

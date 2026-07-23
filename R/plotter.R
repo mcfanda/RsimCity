@@ -138,7 +138,7 @@ plot_by_method <- function(data,
 #' @param na.rm Logical. Should missing values be removed before aggregation?
 #'   Default is `TRUE`.
 #' @param fixed Logical. Passed to `grep()`. If `TRUE`, `pattern` is matched as
-#'   plain text rather than as a regular expression. Default is `TRUE`.
+#'   plain text rather than as a regular expression. Default is `FALSE`.
 #' @param xlabel Optional character string. Label for the x-axis. If `NULL`,
 #'   `xvar` is used.
 #' @param ylabel Optional character string. Label for the y-axis. If `NULL`,
@@ -148,7 +148,7 @@ plot_by_method <- function(data,
 #' @param points Logical. If `TRUE`, points are drawn. Default is `TRUE`.
 #'
 #' @param varsname Optional character vector of column names to plot (used if `pattern` is `NULL`).
-#' @param legeng Logical. Whether to show a legend (default `TRUE`).
+#' @param legend Logical. Whether to show a legend (default `TRUE`).
 #' @param legend_labels Optional character vector of labels for the legend, same length as matched columns.
 #' @param colors Optional character vector of colors for the plotted lines/points.
 #' @param linetypes Optional character vector of linetypes for the matched columns.
@@ -189,7 +189,7 @@ plot_by_columns <- function(data,
                                  fixed = FALSE,
                                  xlabel = NULL,
                                  ylabel = NULL,
-                                 legeng= TRUE,
+                                 legend = TRUE,
                                  legend_labels=NULL,
                                  title = NULL,
                                  line = TRUE,
@@ -200,25 +200,56 @@ plot_by_columns <- function(data,
   if (!is.data.frame(data))
     stop("data must be a data.frame")
 
-  if (!xvar %in% names(data))
-    stop("xvar not found in data: ", xvar)
+  if (!is.character(xvar) || length(xvar) != 1L || is.na(xvar) || !nzchar(xvar)) {
+    stop("xvar must be a single, non-missing character string", call. = FALSE)
+  }
+
+  if (!xvar %in% names(data)) {
+    stop("xvar not found in data: ", xvar, call. = FALSE)
+  }
+
   if (!is.null(pattern)) {
-      matched <- grep(pattern, names(data), value = TRUE, fixed = fixed)
+    if (!is.character(pattern) || length(pattern) != 1L || is.na(pattern)) {
+      stop("pattern must be a single, non-missing character string", call. = FALSE)
+    }
 
-      if (length(matched) == 0)
-        stop("No columns matched pattern: ", pattern)
-
-        non_numeric <- matched[!vapply(data[matched], is.numeric, logical(1))]
-
-        if (length(non_numeric) > 0) {
-          stop(
-            "The following matched columns are not numeric: ",
-            paste(non_numeric, collapse = ", ")
-          )
-        }
+    matched <- grep(pattern, names(data), value = TRUE, fixed = fixed)
   } else {
-    if (is.null(varsname)) stop("Please specify the columns to plot either with `pattern` or with `varsname`")
+    if (is.null(varsname) || !is.character(varsname) || length(varsname) == 0L) {
+      stop("Specify one or more columns with pattern or varsname", call. = FALSE)
+    }
+
     matched <- varsname
+  }
+
+  if (length(matched) == 0L) {
+    stop("No columns matched pattern: ", pattern, call. = FALSE)
+  }
+
+  missing_vars <- setdiff(matched, names(data))
+  if (length(missing_vars) > 0L) {
+    stop(
+      "The following columns were not found in data: ",
+      paste(missing_vars, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  non_numeric <- matched[!vapply(data[matched], is.numeric, logical(1))]
+  if (length(non_numeric) > 0L) {
+    stop(
+      "The following selected columns are not numeric: ",
+      paste(non_numeric, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  if (!is.function(fun)) {
+    stop("fun must be a function", call. = FALSE)
+  }
+
+  if (!is.logical(legend) || length(legend) != 1L || is.na(legend)) {
+    stop("legend must be a single logical value", call. = FALSE)
   }
 
   longdata <- data.frame(
@@ -240,6 +271,20 @@ plot_by_columns <- function(data,
   names(aggdata)[3] <- "value"
 
   aggdata$variable <- factor(aggdata$variable, levels = matched)
+
+  if (is.null(legend_labels)) {
+    legend_labels <- matched
+  } else {
+    if (!is.character(legend_labels) || length(legend_labels) < length(matched)) {
+      stop(
+        "legend_labels must be a character vector with one label per selected column",
+        call. = FALSE
+      )
+    }
+
+    legend_labels <- legend_labels[seq_along(matched)]
+  }
+  names(legend_labels) <- matched
 
   p <- ggplot2::ggplot(
     aggdata,
@@ -270,7 +315,7 @@ plot_by_columns <- function(data,
           ggplot2::aes(linetype = variable),
           linewidth = 1
         ) +
-        ggplot2::scale_linetype_manual(values = linetypes)
+        ggplot2::scale_linetype_manual(values = linetypes, labels = legend_labels)
     }
   }
 
@@ -289,30 +334,31 @@ plot_by_columns <- function(data,
     colors <- colors[seq_along(matched)]
     names(colors) <- matched
 
-    p <- p + ggplot2::scale_color_manual(values = colors)
+    p <- p + ggplot2::scale_color_manual(values = colors, labels = legend_labels)
   }
 
   p <- p +
     ggplot2::labs(
       x = if (is.null(xlabel)) xvar else xlabel,
-      y = if (is.null(ylabel)) pattern else ylabel,
+      y = if (is.null(ylabel)) {
+        if (is.null(pattern)) "Value" else pattern
+      } else {
+        ylabel
+      },
       color = "Variable",
       linetype = "Variable",
       title = title
     )
 
-  if (!is.null(legend_labels)) {
-    if (length(legend_labels) < length(matched)) {
-      stop(
-        "legend_labels has length ", length(legend_labels),
-        " but there are ", length(matched), " matched columns"
-      )
-    }
-
-    legend_labels <- legend_labels[seq_along(matched)]
-    names(legend_labels) <- matched
+  if (is.null(colors)) {
+    p <- p + ggplot2::scale_color_discrete(labels = legend_labels)
   }
-  p <- p +  ggplot2::theme_classic()
+
+  p <- p + ggplot2::theme_classic()
+
+  if (!legend) {
+    p <- p + ggplot2::theme(legend.position = "none")
+  }
 
   return(p)
 }

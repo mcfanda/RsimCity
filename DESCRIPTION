@@ -6,8 +6,11 @@ Author: Marcello Gallucci [aut, cre]
 Authors@R: person("Marcello", "Gallucci", email = "mcfanda@gmail.com",
         role = c("aut", "cre"))
 Maintainer: Marcello Gallucci <mcfanda@gmail.com>
-Description: Provides generic function to setup and run simulations and
-        experiments. Beta version.
+Description: Tools for defining and running simulation experiments. Provides
+        an R6-based workflow for specifying fixed parameters, experimental
+        design conditions, simulation steps, and result aggregation. Includes
+        functions for generating samples with specified correlations or
+        explained variance, and utilities for summarizing and plotting results.
 Imports: ggplot2, statmod
 Suggests: R6, later, shiny, future, progress, testthat (>= 3.0.0), knitr, rmarkdown
 Config/testthat/edition: 3
