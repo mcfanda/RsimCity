@@ -33,13 +33,13 @@
 #'   byrow = TRUE
 #' )
 #'
-#' dat <- simulate_sample_from_corr( R = R,N = 100, mu = c(0, 2), sd = c(1, 3))
+#' dat <- sample_by_corr( R = R,N = 100, mu = c(0, 2), sd = c(1, 3))
 #' head(dat)
 #' cor(dat)
 #'
 #' @importFrom stats rnorm
 #' @export
-simulate_sample_from_corr <- function(R, N, mu = 0, sd = 1, seed = NULL) {
+sample_by_corr <- function(R, N, mu = 0, sd = 1, seed = NULL) {
 
   if (!is.null(seed)) set.seed(seed)
   K <- nrow(R)
@@ -61,6 +61,32 @@ simulate_sample_from_corr <- function(R, N, mu = 0, sd = 1, seed = NULL) {
 
   colnames(X) <- paste0("x", seq_len(K))
   as.data.frame(X)
+}
+
+#' Generate a correlated sample (legacy name)
+#'
+#' @description
+#' Deprecated alias for [sample_by_corr()], kept for backward compatibility with code
+#' published under the old name. New code should call [sample_by_corr()] directly.
+#'
+#' @inheritParams sample_by_corr
+#'
+#' @return See [sample_by_corr()].
+#'
+#' @examples
+#' R <- matrix(
+#'   c(1.0, 0.5,
+#'     0.5, 1.0),
+#'   nrow = 2,
+#'   byrow = TRUE
+#' )
+#'
+#' dat <- simulate_sample_from_corr(R = R, N = 100, mu = c(0, 2), sd = c(1, 3))
+#' head(dat)
+#'
+#' @export
+simulate_sample_from_corr <- function(R, N, mu = 0, sd = 1, seed = NULL) {
+  sample_by_corr(R = R, N = N, mu = mu, sd = sd, seed = seed)
 }
 
 
