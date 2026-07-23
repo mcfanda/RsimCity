@@ -14,7 +14,7 @@ plot_by_columns(
   fixed = FALSE,
   xlabel = NULL,
   ylabel = NULL,
-  legeng = TRUE,
+  legend = TRUE,
   legend_labels = NULL,
   title = NULL,
   line = TRUE,
@@ -41,7 +41,7 @@ plot_by_columns(
 Default is `TRUE`.}
 
 \item{fixed}{Logical. Passed to `grep()`. If `TRUE`, `pattern` is matched as
-plain text rather than as a regular expression. Default is `TRUE`.}
+plain text rather than as a regular expression. Default is `FALSE`.}
 
 \item{xlabel}{Optional character string. Label for the x-axis. If `NULL`,
 `xvar` is used.}
@@ -49,7 +49,7 @@ plain text rather than as a regular expression. Default is `TRUE`.}
 \item{ylabel}{Optional character string. Label for the y-axis. If `NULL`,
 `pattern` is used.}
 
-\item{legeng}{Logical. Whether to show a legend (default `TRUE`).}
+\item{legend}{Logical. Whether to show a legend (default `TRUE`).}
 
 \item{legend_labels}{Optional character vector of labels for the legend, same length as matched columns.}
 
