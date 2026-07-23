@@ -8,7 +8,7 @@ Authors@R: person("Marcello", "Gallucci", email = "mcfanda@gmail.com",
 Maintainer: Marcello Gallucci <mcfanda@gmail.com>
 Description: Provides generic function to setup and run simulations and
         experiments. Beta version.
-Imports: ggplot2
+Imports: ggplot2, statmod
 Suggests: R6, later, shiny, future, progress, testthat (>= 3.0.0), knitr, rmarkdown
 Config/testthat/edition: 3
 License: GPL
