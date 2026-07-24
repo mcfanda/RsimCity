@@ -1,0 +1,37 @@
+url: https://mcfanda.github.io/RsimCity/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+
+home:
+  title: Rsimcity
+  description: Tools for designing, running, and visualising simulation experiments in R.
+
+navbar:
+  structure:
+    left: [get-started, reference, articles, news]
+    right: [github]
+  components:
+    get-started:
+      text: Get started
+      href: articles/intro.html
+
+reference:
+  - title: Simulation experiments
+    desc: Define simulation conditions, execute replications, and monitor results.
+    contents:
+      - Runner
+      - Interactive
+  - title: Data-generating mechanisms
+    desc: Generate samples with a specified correlation, R-squared, or eta-squared.
+    contents:
+      - sample_by_corr
+      - sample_by_r2
+      - sample_by_eta2
+      - simulate_sample_from_corr
+  - title: Plotting and utilities
+    contents:
+      - plot_by_method
+      - plot_by_columns
+      - count_names

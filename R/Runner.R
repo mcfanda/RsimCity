@@ -174,10 +174,13 @@ Runner <- R6::R6Class(
               future::plan(future::multicore)
         else
               future::plan(future::multisession)
-
-      } else if (requireNamespace("future", quietly = TRUE)) {
-        future::plan(future::sequential)
       }
+      ### when obj$parallel is FALSE, the per-cell loop below never calls
+      ### future::future() itself, so no plan is needed for it -- deliberately not
+      ### forcing future::plan(future::sequential) here, since that would clobber
+      ### any plan the caller's own step function relies on for its own, nested
+      ### parallelism (e.g. a step that calls future.apply::future_lapply()
+      ### internally under obj$parallel = FALSE).
 
 
       egrid  <- expand.grid(params,stringsAsFactors = FALSE)
