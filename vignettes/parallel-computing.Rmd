@@ -1,0 +1,115 @@
+---
+title: "Parallel computing"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Parallel computing}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE)
+library(Rsimcity)
+```
+
+`Runner` supports two independent levels of parallelism, and it's important
+not to mix them up:
+
+- **Across design cells**: `runner$parallel` runs each condition (each row of
+  the design grid) as its own background process, via the
+  [future](https://future.futureverse.org) package.
+- **Within a single step**: your own `step` function can parallelize its own
+  work internally (e.g. with `future.apply::future_lapply()`), regardless of
+  whether `runner$parallel` is `TRUE` or `FALSE`.
+
+This vignette covers both, with minimal examples.
+
+## Parallel across design cells: `runner$parallel`
+
+By default, `runner$parallel` is `FALSE`, and `Runner$experiment()` runs each
+design cell one after another, in the current R session:
+
+```{r sequential}
+runner <- Rsimcity::Runner$new("sequential example")
+runner$params <- list(N = 200)
+runner$design <- list(mu = c(0, 1, 2))
+runner$step <- function(N, mu) data.frame(x = rnorm(N, mean = mu))
+runner$aggregate <- function(data, mu) data.frame(mu = mu, mean_x = mean(data$x))
+
+res <- runner$experiment(Rep = 5, progress = FALSE)
+res
+```
+
+Setting `runner$parallel <- TRUE` runs each design cell (each value of `mu`
+here) in its own background process instead, using `future::multisession`
+(the default, portable on Windows/macOS/Linux) or `future::multicore`
+(Linux/macOS only, lighter-weight forked processes) via `runner$par_method`:
+
+```{r parallel}
+runner$parallel <- TRUE
+runner$par_method <- "multisession"   # or "multicore" on Linux/macOS
+
+res <- runner$experiment(Rep = 5, progress = FALSE)
+res
+```
+
+Same `step`/`aggregate`/`design`, just flip `runner$parallel` on -- nothing
+else about the code changes. This is worth doing when you have many design
+cells and each one takes a noticeable amount of time on its own, since each
+cell becomes one unit of parallel work; with only a handful of cheap cells
+there's little to gain.
+
+## Parallel within a step
+
+Sometimes a single design cell does most of the work internally -- for
+example, a `step` that searches for something (a required sample size, a
+calibration constant...) by running many internal trials itself, rather than
+relying on `Runner`'s own `Rep` for replication. In that case, parallelizing
+*inside* the step is more useful than parallelizing across the (possibly few)
+design cells.
+
+This works together with `runner$parallel <- FALSE` (the default): set your
+own `future::plan()` once, and call `future.apply::future_lapply()` (or any
+other future-based tool) *inside* your `step` function. `Runner` leaves your
+plan alone whenever `runner$parallel` is `FALSE`, so this is safe.
+
+```{r nested}
+future::plan(future::multisession)
+
+## A step that internally runs 200 trials in parallel and returns their
+## average, instead of relying on Runner's own Rep for replication.
+one_step <- function(mu) {
+  trials <- future.apply::future_lapply(1:200, function(i) {
+    mean(rnorm(50, mean = mu))
+  }, future.seed = TRUE)
+  data.frame(mu = mu, avg = mean(unlist(trials)))
+}
+
+runner2 <- Rsimcity::Runner$new("nested parallel example")
+runner2$parallel <- FALSE          # Runner itself stays sequential across cells...
+runner2$design <- list(mu = c(0, 1, 2))
+runner2$step <- one_step
+runner2$aggregate <- function(data, mu) data.frame(mu = mu, avg = data$avg)
+
+res2 <- runner2$experiment(Rep = 1, progress = FALSE)   # ...one_step does its own parallel work
+res2
+
+future::plan(future::sequential)   # good practice: shut the workers down when done
+```
+
+A few things worth knowing about combining the two levels:
+
+- **Don't parallelize both levels at once.** If `runner$parallel <- TRUE`
+  *and* your `step` also spawns its own parallel workers, you get parallelism
+  nested inside parallelism -- each of `Runner`'s background processes would
+  try to launch its own set of workers, oversubscribing your CPU cores. Pick
+  one level: either `runner$parallel <- TRUE` with a plain (non-parallel)
+  `step`, or `runner$parallel <- FALSE` with a `step` that parallelizes
+  internally, as above.
+- **`runner$parallel <- FALSE` never touches your `future::plan()`.**
+  `Runner`'s own per-cell loop doesn't need a plan in that case (it just calls
+  your `step` directly, once per cell), so whatever plan you set beforehand
+  for your own nested calls is left exactly as you set it.
+- Remember to call `future::plan(future::sequential)` (or otherwise close the
+  workers) when you're done with a nested-parallel run, to free up the
+  background processes it started.
