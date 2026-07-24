@@ -181,6 +181,7 @@ simulate_sample_from_corr <- function(R, N, mu = 0, sd = 1, seed = NULL) {
 #'
 #' @importFrom stats rnorm plogis rbinom qlogis uniroot optim glm lm binomial fitted
 #' @importFrom statmod gauss.quad.prob
+#' @importFrom digest digest
 #' @export
 sample_by_r2 <- function(n, beta = NULL, R2,
                           model = c("gaussian", "logistic", "multinomial", "ordinal"),
@@ -268,6 +269,7 @@ sample_by_r2 <- function(n, beta = NULL, R2,
 #'
 #' @importFrom stats rnorm plogis rbinom qlogis uniroot optim glm lm binomial fitted
 #' @importFrom statmod gauss.quad.prob
+#' @importFrom digest digest
 #' @export
 sample_by_eta2 <- function(n, beta = NULL, eta2,
                             model = c("gaussian", "logistic", "multinomial", "ordinal"),
@@ -321,7 +323,7 @@ sample_by_eta2 <- function(n, beta = NULL, eta2,
 gh_calibration_cache <- new.env(parent = emptyenv())
 
 gh_calibration_key <- function(x, target, kind) {
-  paste(
+  raw <- paste(
     kind, sprintf("%.15g", target), x$model, x$k, x$order, sprintf("%.15g", x$error_sd),
     paste(sprintf("%.15g", x$beta_direction), collapse = ","),
     paste(sprintf("%.15g", x$x_mean), collapse = ","),
@@ -332,6 +334,10 @@ gh_calibration_key <- function(x, target, kind) {
       paste(sprintf("%.15g", if (x$model == "ordinal") x$cutpoints else x$intercept), collapse = ","),
     sep = "|"
   )
+  # Hashed rather than used verbatim: `raw` grows with k^2 (it embeds the full
+  # x_cov matrix), and R caps assign()/exists() variable names at 10000 bytes --
+  # a dense x_cov for even a moderate k (~50+) overflows that limit otherwise.
+  digest::digest(raw, algo = "xxhash64")
 }
 
 gh_get_calibration <- function(x, target, kind) {

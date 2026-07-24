@@ -11,7 +11,7 @@ Description: Tools for defining and running simulation experiments. Provides
         design conditions, simulation steps, and result aggregation. Includes
         functions for generating samples with specified correlations or
         explained variance, and utilities for summarizing and plotting results.
-Imports: ggplot2, statmod
+Imports: ggplot2, statmod, digest
 Suggests: R6, later, shiny, future, progress, testthat (>= 3.0.0), knitr, rmarkdown
 Config/testthat/edition: 3
 License: GPL
