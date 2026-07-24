@@ -1,7 +1,7 @@
 Package: Rsimcity
 Type: Package
 Title: R6 Suite for Simulations
-Version: 0.2.2
+Version: 0.2.4
 Author: Marcello Gallucci [aut, cre]
 Authors@R: person("Marcello", "Gallucci", email = "mcfanda@gmail.com",
         role = c("aut", "cre"))
@@ -11,10 +11,13 @@ Description: Tools for defining and running simulation experiments. Provides
         design conditions, simulation steps, and result aggregation. Includes
         functions for generating samples with specified correlations or
         explained variance, and utilities for summarizing and plotting results.
-Imports: ggplot2, statmod
+Imports: ggplot2, statmod, digest
 Suggests: R6, later, shiny, future, progress, testthat (>= 3.0.0), knitr, rmarkdown
 Config/testthat/edition: 3
 License: GPL
 Encoding: UTF-8
 Config/roxygen2/version: 8.0.0
 VignetteBuilder: knitr
+URL: https://github.com/mcfanda/RsimCity, https://mcfanda.github.io/RsimCity/
+BugReports: https://github.com/mcfanda/RsimCity/issues
+Config/Needs/website: pkgdown
