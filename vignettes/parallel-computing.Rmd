@@ -29,11 +29,18 @@ This vignette covers both, with minimal examples.
 By default, `runner$parallel` is `FALSE`, and `Runner$experiment()` runs each
 design cell one after another, in the current R session:
 
+`runner$step` isn't limited to an inline function -- it just needs to hold a
+function, so any ordinary function you've already defined works just as well:
+
 ```{r sequential}
+my_step <- function(N, mu) {
+  data.frame(x = rnorm(N, mean = mu))
+}
+
 runner <- Rsimcity::Runner$new("sequential example")
 runner$params <- list(N = 200)
 runner$design <- list(mu = c(0, 1, 2))
-runner$step <- function(N, mu) data.frame(x = rnorm(N, mean = mu))
+runner$step <- my_step
 runner$aggregate <- function(data, mu) data.frame(mu = mu, mean_x = mean(data$x))
 
 res <- runner$experiment(Rep = 5, progress = FALSE)
