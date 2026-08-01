@@ -7,7 +7,7 @@ also includes tools for generating samples with specified correlations or known
 population R-squared and eta-squared values.
 
 > **Looking for function help?** Browse the complete
-> [online reference](https://mcfanda.github.io/RsimCity/reference/) for every
+> [online reference](https://mcfanda.github.io/Rsimcity/reference/) for every
 > exported function and class.
 
 ## Install
@@ -17,17 +17,17 @@ Install the development version directly from GitHub with
 
 ```r
 install.packages("pak")
-pak::pak("mcfanda/RsimCity")
+pak::pak("mcfanda/Rsimcity")
 ```
 
 Alternatively, use `remotes`:
 
 ```r
 install.packages("remotes")
-remotes::install_github("mcfanda/RsimCity")
+remotes::install_github("mcfanda/Rsimcity")
 ```
 
 ## Learn more
 
-- [Start with the introduction](https://mcfanda.github.io/RsimCity/articles/intro.html)
-- [Browse the full help reference](https://mcfanda.github.io/RsimCity/reference/)
+- [Start with the introduction](https://mcfanda.github.io/Rsimcity/articles/intro.html)
+- [Browse the full help reference](https://mcfanda.github.io/Rsimcity/reference/)
