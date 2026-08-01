@@ -2,7 +2,7 @@
 % Please edit documentation in R/plotter.R
 \name{plot_by_splits}
 \alias{plot_by_splits}
-\title{Plot one outcome against one predictor with optional grouping and splits}
+\title{Plot outcomes against a predictor with optional grouping and splits}
 \usage{
 plot_by_splits(
   data,
@@ -15,15 +15,19 @@ plot_by_splits(
   xlabel = NULL,
   ylabel = NULL,
   color_label = NULL,
+  color_labels = NULL,
+  linetype_label = NULL,
+  linetype_labels = NULL,
   axis_labels = NULL,
   stack_labels = NULL,
   title = NULL,
+  titles = c("side", "top"),
   line = TRUE,
   points = FALSE
 )
 }
 \arguments{
-\item{data}{A `data.frame` containing the simulation results.}
+\item{data}{A data.frame containing the simulation results.}
 
 \item{xvar}{Character string. Name of the variable to use on the x-axis.}
 
@@ -31,70 +35,100 @@ plot_by_splits(
 variable to plot on the y-axis, or several numeric variables to plot as
 separate lines.}
 
-\item{zvar}{Optional character string. Name of the variable used to draw one
-line per value. Default is `NULL`.}
+\item{zvar}{Optional character vector of one or two variable names. With one
+name, values define the color grouping for one response and the linetype
+grouping for multiple responses. With two names, the first variable
+defines color and the second defines linetype. Default is NULL.}
 
 \item{splits}{Optional character vector, or a list of character strings,
 naming variables used to split the plot. The first split variable is laid
 out in columns, the second in rows, and each additional split variable
 generates a separate plot for every combination of its values.}
 
-\item{fun}{Function used to aggregate `yvar` over duplicate combinations of
-`xvar`, `zvar`, and `splits`. Default is `mean`.}
+\item{fun}{Function used to aggregate yvar over duplicate combinations of
+xvar, zvar, and splits. Default is mean.}
 
 \item{na.rm}{Logical. Should missing values be removed before aggregation?
-Default is `TRUE`.}
+Default is TRUE.}
 
-\item{xlabel}{Optional character string. Label for the x-axis. If `NULL`,
-`xvar` is used.}
+\item{xlabel}{Optional character string or plotmath expression. Label for
+the x-axis. If NULL, xvar is used.}
 
-\item{ylabel}{Optional character string. Label for the y-axis. If `NULL`,
-`yvar` is used for a single response and `"Value"` for multiple responses.}
+\item{ylabel}{Optional character string or plotmath expression. Label for
+the y-axis. If NULL, yvar is used for a single response and Value for
+multiple responses.}
 
-\item{color_label}{Optional character string. Label for the color legend. If
-`NULL`, `zvar` is used for single-response plots and `"Variable"` for
-multi-response plots.}
+\item{color_label}{Optional character string or plotmath expression. Label
+for the color legend. If NULL, the relevant grouping variable or Variable
+is used.}
+
+\item{color_labels}{Optional character or expression vector defining the
+color legend entries. Unnamed labels are matched by plotted level order;
+named labels replace only the corresponding plotted levels.}
+
+\item{linetype_label}{Optional character string or plotmath expression.
+Label for the linetype legend. If NULL, the relevant grouping variable is
+used.}
+
+\item{linetype_labels}{Optional character or expression vector defining the
+linetype legend entries. Unnamed labels are matched by plotted level order;
+named labels replace only the corresponding plotted levels.}
 
 \item{axis_labels}{Optional named list or named character vector with labels
-for plot guides. Supported names are `"x"`, `"y"`, `"color"`, and
-`"linetype"`. These are used only when the corresponding explicit label
-argument is `NULL`.}
+for plot guides. Supported names are x, y, color, and linetype. These are
+used only when the corresponding explicit label argument is NULL.}
 
 \item{stack_labels}{Optional character vector, or list of character strings,
 giving display labels for split variables. If unnamed, it must have one
 label per split variable and is matched by order. If named, names must be
-drawn from `splits`, and unmatched split variables keep their original
-names.}
+drawn from splits, and unmatched split variables keep their original names.}
 
-\item{title}{Optional character string. Plot title.}
+\item{title}{Optional character string or character vector. A length-one
+value is used as the main plot title. A longer vector supplies one title
+for each row created by the second split variable and requires one title
+per row.}
 
-\item{line}{Logical. If `TRUE`, lines are drawn. Default is `TRUE`.}
+\item{titles}{Character string selecting the row-title placement: side (the
+default) uses the row facet strips, while top places each row title in a
+dedicated area above the row. The top layout applies when at least two
+split variables are supplied.}
 
-\item{points}{Logical. If `TRUE`, points are drawn. Default is `FALSE`.}
+\item{line}{Logical. If TRUE, lines are drawn. Default is TRUE.}
+
+\item{points}{Logical. If TRUE, points are drawn. Default is FALSE.}
 }
 \value{
-A `ggplot` object when `length(splits) <= 2`; otherwise a named list of
-`ggplot` objects.
+A ggplot object when length(splits) <= 2; otherwise a named list of ggplot
+objects.
 }
 \description{
-Produces a `ggplot2` line/point plot of one numeric outcome against one
-predictor variable. An optional `zvar` draws separate lines, while
-`splits` replicate the plot across panels.
+Produces a ggplot2 line/point plot of one or more numeric outcomes against
+one predictor variable. Optional grouping and split variables replicate the
+lines or panels as needed.
 }
 \details{
-The function keeps only `xvar`, `yvar`, `zvar`, and the requested
-`splits`, then aggregates `yvar` by every unique combination of those
-variables. This makes it suitable for simulation results where several
-replications or design factors must be averaged before plotting.
+The function keeps only xvar, yvar, zvar, and the requested splits, then
+aggregates yvar by every unique combination of those variables. This makes
+it suitable for simulation results where several replications or design
+factors must be averaged before plotting.
 
-If `yvar` contains more than one name, the function reshapes those columns to
-long format internally and draws one line per response variable. If `zvar`
-is also supplied, one line is drawn for each `yvar` by `zvar` combination.
+If yvar contains more than one name, the function reshapes those columns to
+long format internally and draws one line per response variable. With one
+zvar, color identifies the response and linetype identifies the zvar levels.
+With two zvar names, color identifies the response and first grouping
+variable combination, while linetype identifies the second grouping
+variable. With one response, zvar values identify color for one grouping
+variable or color and linetype for two grouping variables.
 
-If `splits` has length 0, the function returns a single plot. If it has
-length 1 or 2, it returns one faceted `ggplot` object. If it has length
-greater than 2, it returns a named list of `ggplot` objects, one for each
-combination of split variables from the third onward.
+If splits has length 0, the function returns a single plot. If it has length
+1 or 2, it returns one faceted ggplot object. If it has length greater than
+2, it returns a named list of ggplot objects, one for each combination of
+split variables from the third onward. Faceted panels each retain their own
+x-axis ticks and tick labels. A title vector is assigned to the rows created
+by the second split variable. In the default side layout those titles are
+row strips; with titles = top they are placed in dedicated title rows above
+the panels. The title rows use plot.title for text styling, and
+panel.spacing.y controls the vertical space around them.
 }
 \examples{
 \dontrun{
@@ -121,6 +155,27 @@ plot_by_splits(
   splits = c("rho", "design"),
   axis_labels = list(x = "Sample size", y = "RMSE"),
   stack_labels = c(rho = "Correlation", design = "Design")
+)
+
+plot_by_splits(
+  data = simdata,
+  xvar = "r2",
+  yvar = c("power_r2", "power_adjr2"),
+  zvar = "k",
+  splits = c("N", "model_label"),
+  title = c("Logistic", "Multinomial", "Ordinal", "Gaussian"),
+  titles = "top",
+  xlabel = expression(paste("Population ", R^2)),
+  ylabel = "Power",
+  color_labels = expression(eta^2, eta[adj]^2),
+  linetype_labels = c("1" = "K = 1", "2" = "K = 2")
+)
+
+plot_by_splits(
+  data = simdata,
+  xvar = "N",
+  yvar = "rmse",
+  zvar = c("method", "condition")
 )
 }
 

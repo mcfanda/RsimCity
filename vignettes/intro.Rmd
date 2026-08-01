@@ -38,5 +38,61 @@ runner$aggregate <- function(data, mu) {
 res <- runner$experiment(Rep = 10, progress = FALSE)
 
 head(res)
+
 ```
 
+## Plotting split simulation results
+
+plot_by_splits() accepts several response columns and can use one grouping
+variable for color and linetype, or two grouping variables for color and
+linetype separately. The first two split variables form the columns and rows
+of the plot; additional split variables return a named list of plots.
+
+~~~{r plot-by-splits}
+plot_data <- expand.grid(
+  x = c(1, 2, 3),
+  model = c("A", "B", "C"),
+  scenario = c("baseline", "alternative"),
+  method = c("actual", "adjusted"),
+  rep = 1:2,
+  stringsAsFactors = FALSE
+)
+
+plot_data$estimate <- with(
+  plot_data,
+  x / 3 +
+    ifelse(model == "B", 0.05, ifelse(model == "C", 0.10, 0)) +
+    ifelse(scenario == "alternative", 0.03, 0) +
+    ifelse(method == "adjusted", 0.02, 0) +
+    rep / 100
+)
+plot_data$target <- with(plot_data, x / 3 + rep / 100)
+
+figure <- plot_by_splits(
+  data = plot_data,
+  xvar = "x",
+  yvar = c("estimate", "target"),
+  zvar = "method",
+  splits = c("model", "scenario"),
+  title = c("Baseline", "Alternative"),
+  titles = "top",
+  xlabel = "Simulation size",
+  ylabel = "Value",
+  color_labels = c(estimate = "Estimate", target = "Target"),
+  linetype_labels = c(actual = "Actual", adjusted = "Adjusted")
+)
+
+figure
+~~~
+
+For top row titles, plot.title controls the title text and panel.spacing.y
+controls the space around the title rows. These are ordinary ggplot2 theme
+settings and can be changed after the plot is created:
+
+~~~{r plot-by-splits-theme}
+figure +
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(size = 12),
+    panel.spacing.y = grid::unit(10, "pt")
+  )
+~~~
