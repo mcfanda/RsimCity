@@ -191,8 +191,8 @@ sample_by_r2 <- function(n, beta = NULL, R2,
 
   model <- match.arg(model)
 
-  if (R2 <= 0 || R2 >= 1)
-    stop("R2 must be strictly between 0 and 1")
+  if (R2 < 0 || R2 >= 1)
+    stop("R2 must be R2 < 0 and R2 >= 1")
 
   args <- mget(names(formals()), envir = environment())          # Evaluate all arguments
   class(args) <- c(class(args), model)
@@ -279,8 +279,8 @@ sample_by_eta2 <- function(n, beta = NULL, eta2,
 
   model <- match.arg(model)
 
-  if (eta2 <= 0 || eta2 >= 1)
-    stop("eta2 must be strictly between 0 and 1")
+  if (eta2 < 0 || eta2 >= 1)
+    stop("eta2 must be  between 0 and <1")
 
   args <- mget(names(formals()), envir = environment())          # Evaluate all arguments
   class(args) <- c(class(args), model)
