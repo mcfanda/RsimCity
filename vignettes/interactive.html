@@ -368,7 +368,7 @@ callbacks as the simulation produces results.</p>
 sample, and the aggregate function computes its mean.</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>runner <span class="ot">&lt;-</span> Rsimcity<span class="sc">::</span>Runner<span class="sc">$</span><span class="fu">new</span>(<span class="st">&quot;interactive-demo&quot;</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>runner<span class="sc">$</span>params <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">N =</span> <span class="dv">80</span>)</span>
-<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>runner<span class="sc">$</span>design <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">mu =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">0</span>, <span class="dv">1</span>))</span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>runner<span class="sc">$</span>design <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">mu =</span> <span class="fu">seq</span>(<span class="sc">-</span><span class="dv">1</span>, <span class="dv">1</span>, .<span class="dv">05</span>))</span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a></span>
 <span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>runner<span class="sc">$</span>step <span class="ot">&lt;-</span> <span class="cf">function</span>(N, mu) {</span>
 <span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>  <span class="fu">data.frame</span>(<span class="at">value =</span> stats<span class="sc">::</span><span class="fu">rnorm</span>(N, <span class="at">mean =</span> mu))</span>

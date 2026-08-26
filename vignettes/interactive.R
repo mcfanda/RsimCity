@@ -20,7 +20,7 @@ knitr::opts_chunk$set(
 ## ----define-runner------------------------------------------------------------
 runner <- Rsimcity::Runner$new("interactive-demo")
 runner$params <- list(N = 80)
-runner$design <- list(mu = c(-1, 0, 1))
+runner$design <- list(mu = seq(-1, 1, .05))
 
 runner$step <- function(N, mu) {
   data.frame(value = stats::rnorm(N, mean = mu))
@@ -55,6 +55,7 @@ aggregate_plot <- function(data, step) {
     ) +
     ggplot2::theme_minimal()
 }
+
 
 ## ----create-monitor-----------------------------------------------------------
 monitor <- Rsimcity::Interactive$new(
