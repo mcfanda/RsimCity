@@ -21,6 +21,18 @@ testthat::test_that("bind_list_cols repeats scalar values and ignores non-scalar
 })
 
 
+testthat::test_that("bind_list_cols does not duplicate aggregate metadata", {
+  df <- data.frame(mu = -1, mean_value = 0.2)
+  x <- list(N = 80, mu = -1, .Rep = 20)
+
+  res <- Rsimcity:::bind_list_cols(df, x)
+
+  testthat::expect_equal(anyDuplicated(names(res)), 0L)
+  testthat::expect_true(all(c("N", "mu", ".Rep", "mean_value") %in% names(res)))
+  testthat::expect_equal(res$mu, -1)
+})
+
+
 testthat::test_that("numColMean computes numeric means and keeps first for characters", {
   df <- data.frame(
     num1 = c(1, 2, NA),

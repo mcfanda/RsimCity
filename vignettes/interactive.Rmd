@@ -1,0 +1,170 @@
+---
+title: "Interactive Simulation Monitoring"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Interactive Simulation Monitoring}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+Interactive provides a Shiny monitor for a simulation driven by a Runner. The
+monitor is responsible for displaying data and status; the Runner remains
+responsible for executing simulation and aggregate functions.
+
+Before creating the monitor, define the plotting callbacks that describe what
+should be displayed. `plot_fun` is required: it receives the accumulated output
+from the current design condition and must return the live plot. `agg_plot_fun`
+is optional: define it when you also want a second plot showing the aggregated
+results accumulated across completed design conditions. It receives the
+aggregated output and is used to populate the **Aggregated** tab.
+
+The callbacks are called with these arguments:
+
+```{r callback-signatures-intro, eval=FALSE}
+plot_fun(data, step)
+agg_plot_fun(agg_x, step)
+```
+
+Here `data` is the current-condition output, `agg_x` contains aggregated output
+from all completed conditions, and `step` is the number of updates received.
+The plotting callbacks should return a plot object that Shiny can render. The
+Runner does not create these plots automatically; it calls the callbacks as the
+simulation produces results.
+
+## Define a simulation
+
+This example uses three design conditions. Each replication returns a sample,
+and the aggregate function computes its mean.
+
+```{r setup, include=FALSE}
+interactive_deps <- all(vapply(
+  c("later", "shiny"),
+  requireNamespace,
+  logical(1),
+  quietly = TRUE
+))
+
+knitr::opts_chunk$set(
+  eval = interactive_deps,
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+```{r define-runner}
+runner <- Rsimcity::Runner$new("interactive-demo")
+runner$params <- list(N = 80)
+runner$design <- list(mu = seq(-1, 1, .05))
+
+runner$step <- function(N, mu) {
+  data.frame(value = stats::rnorm(N, mean = mu))
+}
+
+runner$aggregate <- function(data, mu) {
+  data.frame(mu = mu, mean_value = mean(data$value))
+}
+```
+
+## Define the plots
+
+The live plot receives the accumulated output for the current condition. The
+aggregate plot receives the results from all completed conditions.
+
+```{r define-plots}
+live_plot <- function(data, step) {
+  ggplot2::ggplot(data, ggplot2::aes(x = value)) +
+    ggplot2::geom_histogram(bins = 25, fill = "#2C7FB8", colour = "white") +
+    ggplot2::labs(
+      title = sprintf("Current condition, update %d", step),
+      x = "Simulated value",
+      y = "Count"
+    ) +
+    ggplot2::theme_minimal()
+}
+
+aggregate_plot <- function(data, step) {
+  ggplot2::ggplot(data, ggplot2::aes(x = mu, y = mean_value)) +
+    ggplot2::geom_hline(yintercept = 0, colour = "grey70") +
+    ggplot2::geom_line(colour = "#D95F0E") +
+    ggplot2::geom_point(size = 2, colour = "#D95F0E") +
+    ggplot2::labs(
+      title = "Completed conditions",
+      subtitle = sprintf("Latest update: %d", step),
+      x = "Population mean",
+      y = "Observed mean"
+    ) +
+    ggplot2::theme_minimal()
+}
+
+```
+
+## Connect the monitor
+
+Passing agg_plot_fun creates a second Aggregated tab. The start callback
+connects the monitor to Runner$experiment_interactive().
+
+```{r create-monitor}
+monitor <- Rsimcity::Interactive$new(
+  plot_fun = live_plot,
+  agg_plot_fun = aggregate_plot,
+  title = "Interactive simulation demo",
+  plot_refresh_ms = 250,
+  plot_height = "600px",
+  max_rows = 2000
+)
+
+monitor$set_start_fun(function(obj) {
+  runner$experiment_interactive(
+    interactive = obj,
+    Rep = 20,
+    delay = 0.05,
+    reset = FALSE
+  )
+})
+```
+
+## Run the app
+
+The following command opens the monitor in the RStudio Viewer pane. It is
+marked eval=FALSE because launching a Shiny app would block vignette
+rendering. Run it interactively in the Console after evaluating the preceding
+chunks.
+
+```{r run-monitor, eval=FALSE}
+monitor$run(viewer = "pane")
+```
+
+The app initially shows a waiting plot. Press **Start** to begin the
+simulation. The controls have these effects:
+
+- **Start** resets the monitor and invokes start_fun.
+- **Stop** pauses future simulation updates.
+- **Continue** resumes a paused simulation.
+- **Reset** clears live and aggregated data.
+
+During execution, Runner$experiment_interactive() calls monitor$update() after
+each replication. When a design condition finishes, it calls
+monitor$update_agg(); this is what updates the Aggregated tab. The two callbacks
+are called as follows:
+
+```{r callback-signatures, eval=FALSE}
+live_plot(data, step)
+aggregate_plot(agg_x, step)
+```
+
+## Live-only monitoring
+
+An aggregated plot is optional. If only the current condition is relevant,
+omit agg_plot_fun:
+
+```{r live-only, eval=FALSE}
+live_monitor <- Rsimcity::Interactive$new(plot_fun = live_plot)
+live_monitor$set_start_fun(function(obj) {
+  runner$experiment_interactive(interactive = obj, Rep = 20)
+})
+live_monitor$run(viewer = "pane")
+```
+
+The same monitor can also be opened in the system browser with
+viewer = "browser", or created without opening a viewer with viewer = "none".
