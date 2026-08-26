@@ -2,7 +2,7 @@ testthat::test_that("experiment_interactive() stores error in info$error and pau
   testthat::skip_if_not_installed("shiny")
   testthat::skip_if_not_installed("later")
 
-  runner <- Runner$new("error-test")
+  runner <- Rsimcity::Runner$new("error-test")
   runner$params <- list(N = 1)
 
   # No formal argument matches params$N, so .one_step() throws
@@ -11,7 +11,7 @@ testthat::test_that("experiment_interactive() stores error in info$error and pau
   # which writes to interactive$info$error and calls interactive$pause().
   runner$step <- function(no_match) stats::rnorm(no_match)
 
-  mon <- Interactive$new(plot_fun = \(data, step) NULL)
+  mon <- Rsimcity::Interactive$new(plot_fun = \(data, step) NULL)
 
   runner$experiment_interactive(interactive = mon, Rep = 1, delay = 0, reset = FALSE)
   later::run_now()

@@ -10,6 +10,10 @@ bind_list_cols <- function(df, x) {
 
   x <- x[keep]
 
+  # Aggregate functions may return a design variable themselves. Keep the
+  # user-returned column and do not bind a duplicate metadata column.
+  x <- x[setdiff(names(x), names(df))]
+
   if (length(x) == 0)
     return(df)
 

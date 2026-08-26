@@ -7,6 +7,7 @@ local/
 local
 .ses
 .session
-
+.claude
+.codex
 Rsimcity.Rcheck/
 Rsimcity_*.tar.gz

@@ -7,8 +7,33 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-This short vignette demonstrates a minimal, non-interactive use of the
-Rsimcity Runner to generate simple simulation results and aggregate them.
+Rsimcity is designed for simulation studies in which the same analysis must
+be repeated over many combinations of parameters, experimental conditions, and
+replications. The package provides a single workflow for defining the data-
+generating process, running the simulation, processing each replication,
+aggregating the results, and inspecting the output.
+
+## Why use Rsimcity?
+
+The main advantages of the package are:
+
+- A reusable Runner object keeps simulation parameters, the experimental design, processing steps, and aggregation functions together in one explicit workflow.
+- Experimental designs are evaluated over all combinations of their factors, while replication and progress handling are managed by the Runner.
+- Function arguments are matched by name to stored parameters, design values, previous step output, and the Runner itself when requested, reducing boilerplate in user-defined functions.
+- Simulation functions can be chained with repeated `$step` assignments. Each step receives the output of the previous step through `data`, so complex workflows can be built from small, testable functions.
+- A step can contain several functions to create parallel branches from the same input, which is useful when multiple analyses must be performed on one simulated sample.
+- Errors in individual simulation steps or replications are handled without unnecessarily stopping the complete experiment. Failed replications are recorded in the results so they can be inspected afterward.
+- Results can be aggregated automatically with the default aggregation or with one or more user-defined aggregation functions added through `$aggregate`.
+- The same aggregation pipeline can be reused across design conditions, making comparisons between conditions straightforward.
+- Built-in `test_one()`, `test_cycle()`, and `test_aggregates()` methods let users validate the workflow before launching a full experiment.
+- Experiments can run sequentially or in parallel across design conditions through the `future` framework, with the same Runner interface in both cases.
+- Interactive simulations can be monitored in a Shiny application, including live plots for the current condition, accumulated aggregate plots, and controls to start, stop, continue, or reset the run.
+- Data-generating helpers support common simulation tasks such as correlated samples and outcomes calibrated to target R-squared or eta-squared values for several response models, with optional seeds for reproducible samples.
+- Plotting helpers provide consistent visualizations of simulation output, including multiple response variables, colour and linetype groupings, split panels, shared legends, axis labels, stack labels, and row titles.
+- Parameters, intermediate results, aggregate results, timings, and failure information remain inspectable, which makes simulation runs easier to debug and extend.
+
+The rest of this vignette starts with a small non-interactive example. The
+interactive workflow is demonstrated separately in the Interactive vignette.
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(eval = TRUE)
@@ -48,7 +73,7 @@ variable for color and linetype, or two grouping variables for color and
 linetype separately. The first two split variables form the columns and rows
 of the plot; additional split variables return a named list of plots.
 
-~~~{r plot-by-splits}
+```{r plot-by-splits, fig.width=10, fig.height=6, fig.retina=2, out.width='100%', fig.align='center'}
 plot_data <- expand.grid(
   x = c(1, 2, 3),
   model = c("A", "B", "C"),
@@ -83,16 +108,16 @@ figure <- plot_by_splits(
 )
 
 figure
-~~~
+```
 
 For top row titles, plot.title controls the title text and panel.spacing.y
 controls the space around the title rows. These are ordinary ggplot2 theme
 settings and can be changed after the plot is created:
 
-~~~{r plot-by-splits-theme}
+```{r plot-by-splits-theme, fig.width=10, fig.height=6, fig.retina=2, out.width='100%', fig.align='center'}
 figure +
   ggplot2::theme(
     plot.title = ggplot2::element_text(size = 12),
     panel.spacing.y = grid::unit(10, "pt")
   )
-~~~
+```

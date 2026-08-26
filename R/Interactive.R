@@ -222,7 +222,7 @@ Interactive <- R6::R6Class(
         self$agg_x <- x
       }
 
-      self$invalidate_plot()
+      self$invalidate_agg_plot()
 
       invisible(self)
     },
@@ -581,11 +581,11 @@ Interactive <- R6::R6Class(
       obj <- self
       has_agg <- !is.null(obj$agg_plot_fun)
 
-      plot_error_display <- function(e) {
+      plot_error_display <- function(e, fun_name) {
         graphics::plot.new()
         graphics::text(x = 0.5, y = 0.60, labels = "Plot error", cex = 1.4)
         graphics::text(x = 0.5, y = 0.45, labels = conditionMessage(e), cex = 0.8)
-        message("Error in plot_fun():")
+        message("Error in ", fun_name, "():")
         message(conditionMessage(e))
       }
 
@@ -653,7 +653,7 @@ Interactive <- R6::R6Class(
           } else
             tryCatch(
               obj$plot_fun(obj$x, obj$step),
-              error = plot_error_display
+              error = function(e) plot_error_display(e, "plot_fun")
             )
         })
 
@@ -670,7 +670,7 @@ Interactive <- R6::R6Class(
             } else
               tryCatch(
                 obj$agg_plot_fun(obj$agg_x, obj$step),
-                error = plot_error_display
+                error = function(e) plot_error_display(e, "agg_plot_fun")
               )
             })
         }
